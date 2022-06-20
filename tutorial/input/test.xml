@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<gamd>
+    <temperature>300</temperature> <!-- unit.kelvin -->
+
+    <system>
+        <nonbonded-method>PME</nonbonded-method>
+        <nonbonded-cutoff>1.0</nonbonded-cutoff> <!-- unit.nanometers -->
+        <constraints>HBonds</constraints>
+    </system>
+
+    <barostat>
+        <pressure>1.0</pressure> <!-- unit.bar -->
+        <frequency>25</frequency>
+    </barostat>
+    
+    <run-minimization>True</run-minimization>
+
+    <integrator>
+        <algorithm>langevin</algorithm>
+        <boost-type>lower-dual</boost-type>
+        <sigma0>
+            <primary>4</primary> <!-- unit.kilocalories_per_mole -->
+            <secondary>4</secondary> <!-- unit.kilocalories_per_mole -->
+        </sigma0>
+        <random-seed>0</random-seed>
+        <dt>0.002</dt> <!-- unit.picoseconds -->
+        <friction-coefficient>1.0</friction-coefficient> <!-- unit.picoseconds**-1 -->
+        <number-of-steps>
+            <conventional-md-prep>200</conventional-md-prep>
+            <conventional-md>10000</conventional-md>
+            <gamd-equilibration-prep>2000</gamd-equilibration-prep>
+            <gamd-equilibration>100000</gamd-equilibration>
+            <gamd-production>0</gamd-production>
+            <averaging-window-interval>200</averaging-window-interval>
+        </number-of-steps>
+    </integrator>
+
+    <input-files>
+        <amber>
+            <topology>input/diala.ions.parmtop</topology>
+            <coordinates type="rst7">input/diala.npt.rst7</coordinates>
+        </amber>
+    </input-files>
+
+    <outputs>
+        <directory>output/</directory>
+        <overwrite-output>True</overwrite-output>
+
+        <reporting>
+            <energy>
+                <interval>10</interval>
+            </energy>
+            <coordinates>
+                <file-type>DCD</file-type>
+            </coordinates>
+            <statistics>
+                <interval>10</interval>
+            </statistics>
+        </reporting>
+
+    </outputs>
+
+
+</gamd>
