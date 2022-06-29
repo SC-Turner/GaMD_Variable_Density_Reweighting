@@ -12,11 +12,11 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'mypackage'
-DESCRIPTION = 'My short description for my project.'
-URL = 'https://github.com/me/myproject'
-EMAIL = 'me@example.com'
-AUTHOR = 'Awesome Soul'
+NAME = 'VDR'
+DESCRIPTION = 'Variable Density Reweighting for GaMD Simulations'
+URL = 'https://github.com/sct1g15/GaMD_Variable_Density_Reweighting'
+EMAIL = 'sct1g15@soton.ac.uk'
+AUTHOR = 'Steven Turner'
 REQUIRES_PYTHON = '>=3.6.0'
 VERSION = '0.1.0'
 

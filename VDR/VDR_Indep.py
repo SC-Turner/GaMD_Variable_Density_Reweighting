@@ -12,24 +12,15 @@ from itertools import chain, repeat
 import os
 
 class Variable_Density_Reweighting:
-    def __init__(self, gamd, data, cores, Emax=8, maxiter=6, pbc=False, temp=300, output_dir='output'):
+    def __init__(self, gamd, data, cores, step_multi, Emax=8, maxiter=6, pbc=False, temp=300, output_dir='output'):
         print('Initialising')
         self.output_dir = str(output_dir)+'/'
         if not os.path.exists(self.output_dir):
             os.mkdir(os.path.join(self.output_dir))
 
-        # self.universe = data[(data[:, 0] <= max(data[:, 0])) & (data[:, 1] <= max(data[:, 1])) & (data[:, 0] > min(data[:, 0]))  & (data[:, 1] > min(data[:, 1]))]
-        #Load CV Data
-        #self.universe = np.loadtxt(data, usecols=[0,1,2])
-        self.data = np.loadtxt(data)
-        print('Data Loading Complete')
         self.pbc=pbc
-
-        #Load GaMD Weights
-        self.gamd=np.loadtxt(gamd)
-        #self.weights = np.exp(self.gamd[:,0])
-        self.dV = self.gamd[:,1:3]
-        print('GaMD Data Loading Complete')
+        self.gamd, self.data = calc_inputs(step_multi=step_multi, gamd=gamd, data=data)
+        self.dV = self.gamd[:,0:2]
 
         self.vertices = [(min(self.data[:, 0]), max(self.data[:, 1])), (max(self.data[:, 0]), max(self.data[:, 1])),
                          (min(self.data[:, 0]), min(self.data[:, 1])), (max(self.data[:, 0]), min(self.data[:, 1]))]
@@ -38,7 +29,7 @@ class Variable_Density_Reweighting:
         self.T = temp
 
         self.dimensions = range(0, 3)
-        self.iterations = maxiter  # no. of sequential segmentation iterations of the dataset to be performed (Stops once no changes occur)
+        self.iterations = maxiter  # no. of sequential segmentation iterations of the dataset to be performed (Stops automatically once no changes occur)
         self.pmf_min_array = []
         self.pmf_max_distribution = []
         self.dv_avg_distribution = []
@@ -46,11 +37,17 @@ class Variable_Density_Reweighting:
         self.pmf_max_array = []
         self.PMF = []
         self.pmf_array_convergence = []
-        self.conv_check_array = []
         self.limdatapoints = None
         # self.convergence_points = 10, 100
         self.convergence_points = np.logspace(1, 7, num=13)
         self.convergence_points = np.logspace(3, 7, num=9)
+
+        self.dv_avg_distribution_max = []
+        self.dv_avg_distribution_min = []
+        self.dv_std_distribution_max = []
+        self.dv_std_distribution_min = []
+        self.anharm_total_max = []
+        self.anharm_total_min = []
 
     def identify_segments(self, cutoff=100000):
         self.cutoff = cutoff
@@ -59,15 +56,17 @@ class Variable_Density_Reweighting:
         a = pd.DataFrame({'rc1': self.data[:, 0],
                             'rc2': self.data[:, 1],
                             'frame': self.data[:, 2]})  # match C
-        b = pd.DataFrame({'frame': self.dV[:, 0],
-                            'dV': self.dV[:, 1]})
-        df = pd.concat([a, b['dV']], axis=1)
-        # df = pd.concat([a, b['dV']], axis=1) #possibly need to minimize the amount of information passed here
+        b = pd.DataFrame({'frame': self.dV[:, 1],
+                            'dV': self.dV[:, 0]})
 
-        print(np.array(df['dV']))
-        anharm_total = anharm(np.array(df['dV']))
-        with open(str(self.output_dir)+'anharm_total.txt', 'w') as f:
-            f.write(str(anharm_total))
+        df = a.merge(b, how='inner', on = ['frame'])
+
+        print('Input Data:')
+        print(df)
+
+        self.whole_dv_avg = np.mean(df['dV'])
+        self.whole_dv_std = np.std(df['dV'])
+
         self.conv_check = []
         self.universe = df.to_numpy()
 
@@ -77,14 +76,15 @@ class Variable_Density_Reweighting:
             if segment_iterations == 0:
                 PBCx_values = -360, 0, 360
                 PBCy_valyes = -360, 0, 360
-                if self.pbc:
+                if self.pbc == 'True':
                     xmax = 180
                     xmin = -180
                     ymax = 180
                     ymin = -180
                     for x in PBCx_values:
                         for y in PBCy_valyes:
-                            temp_array = pd.concat([a, b['dV']], axis=1).to_numpy()
+                            #temp_array = pd.concat([a, b['dV']], axis=1).to_numpy()
+                            temp_array = a.merge(b, how='inner', on = ['frame']).to_numpy()
                             temp_array[:, 0] += x
                             temp_array[:, 1] += y
                             index = 0
@@ -129,7 +129,6 @@ class Variable_Density_Reweighting:
                     universe.append(arr)
                     #plt.scatter(arr[..., 0], arr[..., 1])
             #plt.show()
-            self.conv_check.append([universe, pos])
             self.universe = universe
 
             if np.array(old_universe).shape == np.array(self.universe).shape:
@@ -137,13 +136,13 @@ class Variable_Density_Reweighting:
                 break
             else:
                 old_universe = self.universe
-        self.conv_check_array.append([self.conv_check, list(repeat(cutoff, len(self.conv_check)))])
 
     def reweight_segments(self, cutoff):
         beta = 1.0 / (0.001987 * self.T)
         plt.clf()
         pmf_array = []
         self.pmf_max_distribution = []
+        self.pmf_min_distribution = []
         for i in self.universe:
             if isinstance(i, str):
                 None
@@ -168,23 +167,26 @@ class Variable_Density_Reweighting:
                     [pmf_val, np.mean(i[:, 0]), np.mean(i[:, 1]), dV_avg, dV_std, i, atemp])
 
         pmf_array = np.array(pmf_array)
-        print('Min:', np.min(pmf_array[:, 0]))
         self.pmf_min_array = np.append(self.pmf_min_array, np.min(pmf_array[:, 0]))
-        print('Max:', np.max(pmf_array[:, 0]))
         self.pmf_max_array = np.append(self.pmf_max_array, np.max(pmf_array[:, 0][np.nonzero(pmf_array[:, 0])]))
         index = np.where(
-            pmf_array[:, 0] == np.max(pmf_array[:, 0][np.nonzero(pmf_array[:, 0])]))  # index of max PMF universe
+            pmf_array[:, 0] == np.max(pmf_array[:, 0][np.nonzero(pmf_array[:, 0])]))  # index of max/min PMF universe
         self.pmf_max_distribution = np.append(self.pmf_max_distribution, pmf_array[index, 6])
-        self.dv_avg_distribution = np.append(self.dv_avg_distribution, pmf_array[index, 3])
-        self.dv_std_distribution = np.append(self.dv_std_distribution, pmf_array[index, 4])
+        self.anharm_total_max = np.append(self.anharm_total_max, anharm(self.pmf_max_distribution[0]))
+        self.dv_avg_distribution_max = np.append(self.dv_avg_distribution_max, pmf_array[index, 3])
+        self.dv_std_distribution_max = np.append(self.dv_std_distribution_max, pmf_array[index, 4])
 
-        pmf_array[:, 0] -= np.min(pmf_array[:, 0])  # normalises the array to 0 minumum
+        index = np.where(
+            pmf_array[:, 0] == np.min(pmf_array[:, 0][np.nonzero(pmf_array[:, 0])]))  # index of max/min PMF universe
+        self.pmf_min_distribution = np.append(self.pmf_min_distribution, pmf_array[index, 6])
+
+        self.anharm_total_min = np.append(self.anharm_total_min, anharm(self.pmf_max_distribution[0]))
+        self.dv_avg_distribution_min = np.append(self.dv_avg_distribution_min, pmf_array[index, 3])
+        self.dv_std_distribution_min = np.append(self.dv_std_distribution_min, pmf_array[index, 4])
+
+        pmf_array[:, 0] -= np.min(pmf_array[:, 0])  # normalises the array to 0 minimum
         self.pmf_array = pmf_array
         self.pmf_array_convergence.append(pmf_array[:, 0:3])
-        anharm_total = anharm(self.pmf_max_distribution[0])
-        print('Anharm:'+str(anharm_total))
-        with open(str(self.output_dir)+f'anharm_maxpmf_{cutoff}.txt', 'w') as f:
-            f.write(str(anharm_total))
 
         print('Average dV:', np.mean(pmf_array[:, 3]))
         print('Average Std:', np.mean(pmf_array[:, 4]))
@@ -273,7 +275,6 @@ class Variable_Density_Reweighting:
         pool.close()
         pool.join()
         datapointsmax = np.max(output)
-        print(datapointsmax)
 
         if self.limdatapoints is not None:
             limdatapoints_2 = self.limdatapoints
@@ -366,8 +367,6 @@ class Variable_Density_Reweighting:
         self.PMF = np.nan_to_num(self.PMF, nan=int(self.Emax)).T
 
         ##plot bias
-        print('active')
-
         plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap='jet', levels=50)
         plt.colorbar()
         plt.savefig(str(self.output_dir)+f'bias_{cutoff}.png')
@@ -415,13 +414,29 @@ class Variable_Density_Reweighting:
         # plt.clf()
 
     def calc_conv(self, conv_points):
-        plt.plot(conv_points, self.dv_avg_distribution)
-        plt.savefig(str(self.output_dir)+'mean_plot.png')
-        np.savetxt(str(self.output_dir)+'mean.txt', self.dv_avg_distribution)
+        plt.plot(conv_points, self.dv_avg_distribution_min)
+        plt.hlines(self.whole_dv_avg, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Mean:'+str(self.whole_dv_avg))
+        plt.savefig(str(self.output_dir)+'mean_plot_min.png')
         plt.clf()
-        plt.plot(conv_points, self.dv_std_distribution)
-        plt.savefig(str(self.output_dir)+'std_plot.png')
-        np.savetxt(str(self.output_dir)+'std.txt', self.dv_std_distribution)
+        plt.plot(conv_points, self.dv_std_distribution_min)
+        plt.hlines(self.whole_dv_std, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Standard Deviation:'+str(self.whole_dv_std))
+        plt.savefig(str(self.output_dir)+'std_plot_min.png')
+        plt.clf()
+        plt.plot(conv_points, self.anharm_total_min)
+        plt.savefig(str(self.output_dir)+'anharm_plot_min.png')
+        plt.clf()
+
+        plt.plot(conv_points, self.dv_avg_distribution_max)
+        plt.hlines(self.whole_dv_avg, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Mean:'+str(self.whole_dv_avg))
+        plt.savefig(str(self.output_dir)+'mean_plot_max.png')
+        plt.clf()
+        plt.plot(conv_points, self.dv_std_distribution_max)
+        plt.hlines(self.whole_dv_std, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Standard Deviation:'+str(self.whole_dv_std))
+        plt.savefig(str(self.output_dir)+'std_plot_max.png')
+        plt.clf()
+        plt.plot(conv_points, self.anharm_total_max)
+        plt.savefig(str(self.output_dir)+'anharm_plot_max.png')
+        plt.clf()
 
 
 

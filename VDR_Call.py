@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, 'C:/Users/sct1g15/Documents/gamd_openmm') #Insert path to gamd_openmm git repository
+sys.path.insert(0, 'C:/Users/sct1g15/Documents/Adaptive_GaMD_Dev/VDR/GaMD_Variable_Density_Reweighting/VDR') #Insert path to VDR git repository
 from VDR_Indep import Variable_Density_Reweighting as VDR
 import argparse
 import sys
@@ -8,48 +11,40 @@ import sys
 
 def parse_args():
     print('ARGS test')
-    parser = argparse.ArgumentParser(description="My Script")
-    parser.add_argument("--gamd")
-    parser.add_argument("--data")
-    parser.add_argument("--cores", type=int)
-    parser.add_argument("--emax", type=float)
-    parser.add_argument("--itermax", type=int)
-    parser.add_argument("--conv_points", nargs='+', type=int)
-    parser.add_argument("--output")
-    parser.add_argument("--mode")
-    parser.add_argument("--pbc", type=bool, default=False)
+    parser = argparse.ArgumentParser(description="Variable Density Reweighting of Gaussian Accelerated Molecular Dynamics Simulations")
+    parser.add_argument("--gamd", help="gamd weights .dat file location, generated from GaMD simulation", required=True)
+    parser.add_argument("--data", help="Datafile location containing CV values and timestep, formatted as in input/data_example.txt", required=True)
+    parser.add_argument("--cores", type=int, help='Number of CPU cores to use for VDR', required=True)
+    parser.add_argument("--emax", type=float, help='Kcal/mol value assigned for unsampled regions of CV-space', required=False, default=8)
+    parser.add_argument("--itermax", type=int, help='Generally ignore, cutoff for how many segmentation iterations for VDR', required=False, default=9999)
+    parser.add_argument("--conv_points", nargs='+', type=int, help='Cut-off values for VDR segmentation, use multiple values for convergence mode, one value for single mode', required=True)
+    parser.add_argument("--output", help='Output directory')
+    parser.add_argument("--mode", required=True, help='Whether to evaluate a single cut-off value (mode=single) or evaluate convergence across multiple cut-off values (mode=convergence)',  choices=['single', 'convergence'])
+    parser.add_argument("--pbc", default=False, help='Whether to add partial duplicated boundaries if the CV-limits loop around, i.e. phi/psi angles', choices=['True', 'False'])
+    parser.add_argument("--step_multi", default=True,
+                        help='Whether to multiply timestep column in datafile by timestep identified in gamd weight input file',
+                        choices=['True', 'False'])
     args, leftovers = parser.parse_known_args()
 
     print(args.mode)
 
-    if args.gamd is None:
-        args.gamd = 'Amber99SB_diala_E2_dihedral_90ns/weights_E1_concat.dat'
-    if args.data is None:
-        args.data = 'Amber99SB_diala_E2_dihedral_90ns/data_E1_concat.dat'
-    if args.cores is None:
-        args.cores = 10
-    if args.emax is None:
-        args.emax = 8
-    if args.itermax is None:
-        args.itermax = 6
     if args.mode == 'single':
         if args.conv_points is None:
             args.conv_points = 1000
+        if len(args.conv_points) != 1:
+            raise ValueError("--mode single, only supports one conv_points value")
     elif args.mode == 'convergence':
         if args.conv_points is None:
             args.conv_points = 10, 100, 1000, 10000, 100000
-    else:
-        print('please specify the calculation mode, single or convergence')
-        sys.exit()
+        if len(args.conv_points) == 1:
+            raise ValueError("--mode convergence, only supports multiple conv_points value, use --mode single for a single cut-off")
     if args.output is None:
-        args.output = 'output' 
+        args.output = 'output_VDR'
         
     return args
 
 def main():
-    print('MAIN')
-    print(args)
-    a = VDR(args.gamd, args.data, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc)
+    a = VDR(gamd=args.gamd, data=args.data, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, step_multi=args.step_multi, maxiter=args.itermax)
 
     if args.mode == 'single':
         i = args.conv_points
@@ -59,7 +54,7 @@ def main():
         a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title='')
 
     if args.mode == 'convergence':
-        for count, i in enumerate(conv_points):
+        for count, i in enumerate(args.conv_points):
             print('Limit:', i)
             a.identify_segments(cutoff=i)
             a.reweight_segments(cutoff=i)

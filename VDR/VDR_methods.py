@@ -1,6 +1,23 @@
 import numpy as np
 import scipy
 
+def calc_inputs(step_multi, gamd, data):
+    weights_input = np.loadtxt(gamd, comments='#', usecols=(1, 6, 7))
+    weights = weights_input[:, 1] + weights_input[:, 2]
+    weights = np.vstack((weights, weights_input[:, 0])).T
+    # deletes gamd entries with 0 boost potential (equilibration steps), this is a bit of a hack, needs improving
+    weights = weights[weights[:, 0] != 0]
+    step_size = weights_input[:, 0][0]
+    #np.savetxt('output/weights_example.txt', weights)
+
+    if step_multi == 'True': #Saves both equilibration and Production steps to gamd.log
+        data = np.loadtxt(data)
+        data[:, 2] *= step_size
+    if step_multi == 'False': #Saves both equilibration and Production steps to gamd.log
+        data = np.loadtxt(data)
+
+    return weights, data
+
 def segment_data(temp_universe, pos, cutoff):
     #Segment Function
     div_cut = 20
