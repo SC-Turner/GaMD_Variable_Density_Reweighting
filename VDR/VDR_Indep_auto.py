@@ -7,7 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import pairwise_distances_argmin
 import scipy
 from functools import partial
-from VDR_methods import *
+from VDR.VDR_methods import *
 from itertools import chain, repeat
 import os
 
