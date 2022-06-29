@@ -394,7 +394,7 @@ class Variable_Density_Reweighting:
         # plt.ylim(-180, 180)
         cbar = fig.colorbar(contourf_)
         cbar.set_label('Kcal/mol\n', fontsize=16)
-        plt.savefig(str(self.output_dir)+f'2C_PMF_{self.cutoff}_Limzmod_{title}.png')
+        plt.savefig(str(self.output_dir)+f'2C_PMF_{self.cutoff}.png')
         plt.clf()
 
         del self.universe

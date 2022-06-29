@@ -6,6 +6,8 @@ import sys
 #python ..\..\VDR_Clean\VDR_Call.py --gamd Amber19SB_diala_E2_dual_600ns\weights_E2_concat.dat --data Amber19SB_diala_E2_dual_600ns\data_E2_concat.dat --cores 6 --emax 8 --itermax 6 --conv_points 10 100 1000 10000 100000 1000000 --mode convergence --output E2_dual_600ns
 #
 
+print('Running VDR:')
+
 def parse_args():
     print('ARGS test')
     parser = argparse.ArgumentParser(description="Variable Density Reweighting of Gaussian Accelerated Molecular Dynamics Simulations")
@@ -52,7 +54,7 @@ def main():
 
     if args.mode == 'convergence':
         for count, i in enumerate(args.conv_points):
-            print('Limit:', i)
+            print('Limit:', str(int(i)))
             a.identify_segments(cutoff=i)
             a.reweight_segments(cutoff=i)
             if count == 0:

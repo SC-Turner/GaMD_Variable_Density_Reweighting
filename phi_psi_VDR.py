@@ -11,16 +11,11 @@ parser.add_argument("-traj", help="trajectory", nargs='+', default='output.dcd')
 parser.add_argument("-topol", help="topology", default='../diala.ions.pdb')
 parser.add_argument("-gamd", help="gamd log file", nargs='+', default='gamd.log')
 parser.add_argument("-i", default='', help='Optional suffix for file labelling, eg. _E1 or _E2')
+parser.add_argument("-output", type=str, default="output", help='Output Directory')
 args = parser.parse_args()
 
 def main():
     u = mda.Universe(args.topol, args.traj, in_memory=True)
-    gamd = np.loadtxt(args.gamd, comments='#', usecols=(6, 7))
-    gamd = gamd[:, 0] + gamd[:, 1]
-    gamd = np.vstack((gamd, range(1, len(u.trajectory) + 1))).T
-    # deletes gamd entries with 0 boost potential (equilibration steps), this is a bit of a hack, needs improving
-    gamd = gamd[gamd[:, 0] != 0]
-    np.savetxt('gamd_example.txt', data)
 
     ags1 = [res.phi_selection() for res in u.residues]
     ags2 = [res.psi_selection() for res in u.residues]
@@ -28,15 +23,14 @@ def main():
     output = Dihedral(ags).run()
     angles = output.angles
     data = np.column_stack((angles, range(0, len(u.trajectory))))
-    np.savetxt('data_example.txt', data)
+    #np.savetxt('data_example.txt', data)
 
-    gamd = np.loadtxt('output/gamd_example.txt')
     data = np.loadtxt('input/data_example.txt')
-    a = VDR(gamd, data, cores=6, Emax=8, output_dir='output', pbc=False, maxiter=200)
+    a = VDR(args.gamd, data, cores=6, Emax=8, output_dir='output', pbc=False, maxiter=200, multistep=True)
     conv_points = np.logspace(np.log10(20), np.log10(10000), num=20)
     conv_points = conv_points[:-1]
     for count, i in enumerate(conv_points):
-        print('Limit:', i)
+        print('Limit:', str(int(i)))
         a.identify_segments(cutoff=i)
         a.reweight_segments(cutoff=i)
         if count == 0:
