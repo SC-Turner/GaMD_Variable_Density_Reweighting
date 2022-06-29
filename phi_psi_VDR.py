@@ -4,8 +4,7 @@ import argparse
 import numpy as np
 import subprocess
 import sys
-sys.path.insert(1, 'C:/Users/sct1g15/Documents/Adaptive_GaMD_Dev/GaMD_openmm_dev')
-from VDR_Indep_auto import Variable_Density_Reweighting as VDR
+from VDR.VDR_Indep import Variable_Density_Reweighting as VDR
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-traj", help="trajectory", nargs='+', default='output.dcd')
