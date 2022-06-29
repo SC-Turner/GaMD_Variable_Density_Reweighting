@@ -15,6 +15,7 @@ def calc_inputs(step_multi, gamd, data):
         data[:, 2] *= step_size
     if step_multi == 'False': #Saves both equilibration and Production steps to gamd.log
         data = np.loadtxt(data)
+    print(data)
 
     return weights, data
 

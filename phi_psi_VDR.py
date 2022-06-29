@@ -26,7 +26,7 @@ def main():
     #np.savetxt('data_example.txt', data)
 
     data = np.loadtxt('input/data_example.txt')
-    a = VDR(args.gamd, data, cores=6, Emax=8, output_dir='output', pbc=False, maxiter=200, multistep=True)
+    a = VDR(args.gamd, data, cores=6, Emax=8, output_dir='output', pbc=True, maxiter=200, multistep=True)
     conv_points = np.logspace(np.log10(20), np.log10(10000), num=20)
     conv_points = conv_points[:-1]
     for count, i in enumerate(conv_points):
@@ -36,7 +36,7 @@ def main():
         if count == 0:
             a.calc_limdata(cutoff=i)
         a.interpolate_pmf(cutoff=i)
-        a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title=f'PMF_cutoff_{i}')
+        a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title=f'')
     a.calc_conv(conv_points=conv_points)
 
 if __name__ == '__main__':
