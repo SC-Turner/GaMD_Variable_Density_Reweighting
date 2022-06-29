@@ -17,7 +17,7 @@ python gamd_testsim.py
 ## To reweight your trajectories along a given CV space
 This project has been designed so that users can call the VDR_Call.py script directly from the command line directly after a GaMD simulation with no further modification, e.g:
 ``` 
-python ../VDR_Call.py --gamd output/gamd.log --data input/data_example.txt --cores 6 --emax 8 --mode convergence --conv_points 10 25 50 75 100 200 --pbc True --output output_VDR --engine OpenMM
+python ../VDR_Call.py --gamd output/gamd.log --data input/data_example.txt --cores 6 --emax 8 --mode convergence --conv_points 10 25 50 75 100 200 --pbc True --output output_VDR --multi_step True
 ``` 
 For details on the arguments, you can use
 ``` 
