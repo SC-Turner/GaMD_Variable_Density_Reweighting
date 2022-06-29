@@ -1,7 +1,4 @@
-import sys
-sys.path.insert(0, 'C:/Users/sct1g15/Documents/gamd_openmm') #Insert path to gamd_openmm git repository
-sys.path.insert(0, 'C:/Users/sct1g15/Documents/Adaptive_GaMD_Dev/VDR/GaMD_Variable_Density_Reweighting/VDR') #Insert path to VDR git repository
-from VDR_Indep import Variable_Density_Reweighting as VDR
+from VDR.VDR_Indep import Variable_Density_Reweighting as VDR
 import argparse
 import sys
 
@@ -44,7 +41,7 @@ def parse_args():
     return args
 
 def main():
-    a = VDR(gamd=args.gamd, data=args.data, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, step_multi=args.step_multi, maxiter=args.itermax)
+    a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, step_multi=args.step_multi, maxiter=args.itermax)
 
     if args.mode == 'single':
         i = args.conv_points
