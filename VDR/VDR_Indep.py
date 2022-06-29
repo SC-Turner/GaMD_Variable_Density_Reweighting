@@ -39,8 +39,8 @@ class Variable_Density_Reweighting:
         self.pmf_array_convergence = []
         self.limdatapoints = None
         # self.convergence_points = 10, 100
-        self.convergence_points = np.logspace(1, 7, num=13)
-        self.convergence_points = np.logspace(3, 7, num=9)
+        # self.convergence_points = np.logspace(1, 7, num=13)
+        # self.convergence_points = np.logspace(3, 7, num=9)
 
         self.dv_avg_distribution_max = []
         self.dv_avg_distribution_min = []
@@ -50,7 +50,7 @@ class Variable_Density_Reweighting:
         self.anharm_total_min = []
 
     def identify_segments(self, cutoff=100000):
-        self.cutoff = cutoff
+        self.cutoff = int(cutoff)
         old_universe = []
         
         a = pd.DataFrame({'rc1': self.data[:, 0],
@@ -100,7 +100,7 @@ class Variable_Density_Reweighting:
                 x = [self.universe][0]
             # parallel
             pool = Pool(self.cores)
-            output = pool.starmap(segment_data, zip(x, pos, repeat(cutoff)))
+            output = pool.starmap(segment_data, zip(x, pos, repeat(self.cutoff)))
             output = list(chain.from_iterable(output))
             types = []
             output2 = []
@@ -293,7 +293,7 @@ class Variable_Density_Reweighting:
         plt.ylim(-180, 180)
         plt.scatter(datapoints[:, 0], datapoints[:, 1])
         plt.scatter(limdatapoints_2[:, 0], limdatapoints_2[:, 1])
-        plt.savefig(str(self.output_dir)+f'indep_{cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'indep_{self.cutoff}.png')
         plt.clf()
 
         z_scattered = np.append(z_scattered, limzval, axis=0)
@@ -363,18 +363,17 @@ class Variable_Density_Reweighting:
         self.limdatapoints = limdatapoints_2
 
     def plot_PMF(self, xlab, ylab, cutoff, title):
-
         self.PMF = np.nan_to_num(self.PMF, nan=int(self.Emax)).T
 
         ##plot bias
         plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap='jet', levels=50)
         plt.colorbar()
-        plt.savefig(str(self.output_dir)+f'bias_{cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'bias_{self.cutoff}.png')
         plt.clf()
 
         plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.PMF, cmap='jet', levels=50)
         plt.colorbar()
-        plt.savefig(str(self.output_dir)+f'PMF_{cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'PMF_{self.cutoff}.png')
         
         z_dense = np.add(self.z_dense, self.PMF)
         mymin = np.nanmin([np.nanmin(r) for r in z_dense])
@@ -395,7 +394,7 @@ class Variable_Density_Reweighting:
         # plt.ylim(-180, 180)
         cbar = fig.colorbar(contourf_)
         cbar.set_label('Kcal/mol\n', fontsize=16)
-        plt.savefig(str(self.output_dir)+f'2C_PMF_{cutoff}_Limzmod_{title}.png')
+        plt.savefig(str(self.output_dir)+f'2C_PMF_{self.cutoff}_Limzmod_{title}.png')
         plt.clf()
 
         del self.universe
