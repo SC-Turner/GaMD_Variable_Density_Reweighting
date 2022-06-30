@@ -12,11 +12,20 @@ from itertools import chain, repeat
 import os
 
 class Variable_Density_Reweighting:
-    def __init__(self, gamd, data, cores, step_multi, Emax=8, maxiter=6, pbc=False, temp=300, output_dir='output'):
+    def __init__(self, gamd, data, cores, step_multi, pbc='False', Emax=8, maxiter=9999, temp=300, output_dir='output'):
         print('Initialising')
         self.output_dir = str(output_dir)+'/'
         if not os.path.exists(self.output_dir):
             os.mkdir(os.path.join(self.output_dir))
+
+        if not os.path.exists(self.output_dir+'/PMF'):
+            os.mkdir(os.path.join(self.output_dir+'/PMF'))
+
+        if not os.path.exists(self.output_dir+'/convergence'):
+            os.mkdir(os.path.join(self.output_dir+'/convergence'))
+
+        if not os.path.exists(self.output_dir+'/intermediates'):
+            os.mkdir(os.path.join(self.output_dir+'/intermediates'))
 
         self.pbc=pbc
         self.gamd, self.data = calc_inputs(step_multi=step_multi, gamd=gamd, data=data)
@@ -38,9 +47,6 @@ class Variable_Density_Reweighting:
         self.PMF = []
         self.pmf_array_convergence = []
         self.limdatapoints = None
-        # self.convergence_points = 10, 100
-        # self.convergence_points = np.logspace(1, 7, num=13)
-        # self.convergence_points = np.logspace(3, 7, num=9)
 
         self.dv_avg_distribution_max = []
         self.dv_avg_distribution_min = []
@@ -49,7 +55,7 @@ class Variable_Density_Reweighting:
         self.anharm_total_max = []
         self.anharm_total_min = []
 
-    def identify_segments(self, cutoff=100000):
+    def identify_segments(self, cutoff):
         self.cutoff = int(cutoff)
         old_universe = []
         
@@ -293,7 +299,7 @@ class Variable_Density_Reweighting:
         plt.ylim(-180, 180)
         plt.scatter(datapoints[:, 0], datapoints[:, 1])
         plt.scatter(limdatapoints_2[:, 0], limdatapoints_2[:, 1])
-        plt.savefig(str(self.output_dir)+f'indep_{self.cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'/intermediates/distribution_{self.cutoff}.png')
         plt.clf()
 
         z_scattered = np.append(z_scattered, limzval, axis=0)
@@ -306,7 +312,7 @@ class Variable_Density_Reweighting:
 
         self.z_dense = interpolation(dense_points_norm_noplc).reshape(self.x_dense_pmf.shape)
 
-    def calc_limdata(self, cutoff=1000):
+    def calc_limdata(self, cutoff):
         z_scattered = self.pmf_array[:, 0]
 
         self.universe = np.delete(self.universe, [x == 'nan' for x in self.universe])
@@ -368,12 +374,12 @@ class Variable_Density_Reweighting:
         ##plot bias
         plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap='jet', levels=50)
         plt.colorbar()
-        plt.savefig(str(self.output_dir)+f'bias_{self.cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'/intermediates/bias_{self.cutoff}.png')
         plt.clf()
 
         plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.PMF, cmap='jet', levels=50)
         plt.colorbar()
-        plt.savefig(str(self.output_dir)+f'PMF_{self.cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'/intermediates/PMF_{self.cutoff}.png')
         
         z_dense = np.add(self.z_dense, self.PMF)
         mymin = np.nanmin([np.nanmin(r) for r in z_dense])
@@ -394,7 +400,7 @@ class Variable_Density_Reweighting:
         # plt.ylim(-180, 180)
         cbar = fig.colorbar(contourf_)
         cbar.set_label('Kcal/mol\n', fontsize=16)
-        plt.savefig(str(self.output_dir)+f'2C_PMF_{self.cutoff}.png')
+        plt.savefig(str(self.output_dir)+f'PMF/2C_PMF_{self.cutoff}.png')
         plt.clf()
 
         del self.universe
@@ -415,28 +421,39 @@ class Variable_Density_Reweighting:
     def calc_conv(self, conv_points):
         plt.plot(conv_points, self.dv_avg_distribution_min)
         plt.hlines(self.whole_dv_avg, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Mean:'+str(self.whole_dv_avg))
-        plt.savefig(str(self.output_dir)+'mean_plot_min.png')
+        plt.xscale('log')
+        plt.savefig(str(self.output_dir)+'/convergence/mean_plot_min.png')
+        np.savetxt(str(self.output_dir)+'/convergence/avg_min.dat', np.column_stack((conv_points, self.dv_avg_distribution_min)))
         plt.clf()
         plt.plot(conv_points, self.dv_std_distribution_min)
         plt.hlines(self.whole_dv_std, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Standard Deviation:'+str(self.whole_dv_std))
         plt.xscale('log')
-        plt.savefig(str(self.output_dir)+'std_plot_min.png')
+        plt.savefig(str(self.output_dir)+'/convergence/std_plot_min.png')
+        np.savetxt(str(self.output_dir)+'/convergence/std_min.dat', np.column_stack((conv_points, self.dv_std_distribution_min)))
         plt.clf()
         plt.plot(conv_points, self.anharm_total_min)
-        plt.savefig(str(self.output_dir)+'anharm_plot_min.png')
+        plt.xscale('log')
+        plt.savefig(str(self.output_dir)+'/convergence/anharm_plot_min.png')
+        np.savetxt(str(self.output_dir)+'/convergence/anharm_min.dat', np.column_stack((conv_points, self.anharm_total_min)))
         plt.clf()
 
-        #plt.plot(conv_points, self.dv_avg_distribution_max)
-        #plt.hlines(self.whole_dv_avg, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Mean:'+str(self.whole_dv_avg))
-        #plt.savefig(str(self.output_dir)+'mean_plot_max.png')
-        #plt.clf()
-        #plt.plot(conv_points, self.dv_std_distribution_max)
-        #plt.hlines(self.whole_dv_std, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Standard Deviation:'+str(self.whole_dv_std))
-        #plt.savefig(str(self.output_dir)+'std_plot_max.png')
-        #plt.clf()
-        #plt.plot(conv_points, self.anharm_total_max)
-        #plt.savefig(str(self.output_dir)+'anharm_plot_max.png')
-        #plt.clf()
+        plt.plot(conv_points, self.dv_avg_distribution_max)
+        plt.hlines(self.whole_dv_avg, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Mean:'+str(self.whole_dv_avg))
+        plt.xscale('log')
+        plt.savefig(str(self.output_dir)+'/convergence/mean_plot_max.png')
+        np.savetxt(str(self.output_dir)+'/convergence/avg_max.dat', np.column_stack((conv_points, self.dv_avg_distribution_max)))
+        plt.clf()
+        plt.plot(conv_points, self.dv_std_distribution_max)
+        plt.hlines(self.whole_dv_std, np.min(conv_points), np.max(conv_points), color='red', label='ΔV Standard Deviation:'+str(self.whole_dv_std))
+        plt.xscale('log')
+        plt.savefig(str(self.output_dir)+'/convergence/std_plot_max.png')
+        np.savetxt(str(self.output_dir)+'/convergence/std_max.dat', np.column_stack((conv_points, self.dv_std_distribution_max)))
+        plt.clf()
+        plt.plot(conv_points, self.anharm_total_max)
+        plt.xscale('log')
+        plt.savefig(str(self.output_dir)+'/convergence/anharm_plot_max.png')
+        np.savetxt(str(self.output_dir)+'/convergence/anharm_max.dat', np.column_stack((conv_points, self.anharm_total_max)))
+        plt.clf()
 
 
 

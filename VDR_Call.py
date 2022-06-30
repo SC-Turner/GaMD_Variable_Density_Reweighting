@@ -17,28 +17,24 @@ def parse_args():
     parser.add_argument("--emax", type=float, help='Kcal/mol value assigned for unsampled regions of CV-space', required=False, default=8)
     parser.add_argument("--itermax", type=int, help='Generally ignore, cutoff for how many segmentation iterations for VDR', required=False, default=9999)
     parser.add_argument("--conv_points", nargs='+', type=int, help='Cut-off values for VDR segmentation, use multiple values for convergence mode, one value for single mode', required=True)
-    parser.add_argument("--output", help='Output directory')
-    parser.add_argument("--mode", required=True, help='Whether to evaluate a single cut-off value (mode=single) or evaluate convergence across multiple cut-off values (mode=convergence)',  choices=['single', 'convergence'])
-    parser.add_argument("--pbc", default=False, help='Whether to add partial duplicated boundaries if the CV-limits loop around, i.e. phi/psi angles', choices=['True', 'False'])
-    parser.add_argument("--step_multi", default=True,
-                        help='Whether to multiply timestep column in datafile by timestep identified in gamd weight input file',
+    parser.add_argument("--conv_points_num", type-int, help='Number of cut-off data points to use between range specified in --conv_points, only required for --mode convergence")
+    parser.add_argumens("--conv_points_scale", type=str, default='linear', choices=['linear', 'log'])
+    parser.add_argument("--output", type=str, help='Output directory', default='output')
+    parser.add_argument("--mode", type=str, required=True, help='Whether to evaluate a single cut-off value (mode=single) or evaluate convergence across multiple cut-off values (mode=convergence)',  choices=['single', 'convergence'])
+    parser.add_argument("--pbc", default='False', help='Whether to add partial duplicated boundaries if the CV-limits loop around, i.e. phi/psi angles', choices=['True', 'False'])
+    parser.add_argument("--step_multi", type=str, default='True',
+                        help='Whether to multiply frames column in CV datafile by timestep identified in gamd weight input file, to match timesteps in gamd weight input file',
                         choices=['True', 'False'])
     args, leftovers = parser.parse_known_args()
 
-    print(args.mode)
-
     if args.mode == 'single':
-        if args.conv_points is None:
-            args.conv_points = 1000
         if len(args.conv_points) != 1:
-            raise ValueError("--mode single, only supports one conv_points value")
+            parser.error("--mode single, requires one value to --conv_points_range, defines single cutoff value")
     elif args.mode == 'convergence':
-        if args.conv_points is None:
-            args.conv_points = 10, 100, 1000, 10000, 100000
-        if len(args.conv_points) == 1:
-            raise ValueError("--mode convergence, only supports multiple conv_points value, use --mode single for a single cut-off")
-    if args.output is None:
-        args.output = 'output_VDR'
+        if len(args.conv_points) != 2:
+            parser.error("--mode convergence, requires two values to --conv_points, defines range of cutoff values to use in combination with --conv_points_num")
+        if args.conv_points_num is None:
+            parser.error("--conv_points_num, requires specification of how many cutoff values to use between defined range in --conv_points")
         
     return args
 
@@ -53,6 +49,12 @@ def main():
         a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title='')
 
     if args.mode == 'convergence':
+        if args.conv_points_scale == 'linear':
+            conv_points=range(args.conv_points_range[0], args.conv_points_range[1], args.conv_points_num)
+        if args.conv_points_scale == 'log':
+            conv_points = np.logspace(np.log10(args.conv_points_range[0]), np.log10(args.conv_points_range[1]), num=args.conv_points_num)
+
+    
         for count, i in enumerate(args.conv_points):
             print('Limit:', str(int(i)))
             a.identify_segments(cutoff=i)
