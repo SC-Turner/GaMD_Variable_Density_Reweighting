@@ -196,10 +196,10 @@ class Variable_Density_Reweighting:
 
         print('Average dV:', np.mean(pmf_array[:, 3]))
         with open(str(self.output_dir)+'/convergence/boost_potential_mean.txt', 'w') as f:
-            f.write("%d" % np.mean(pmf_array[:, 3]))
+            f.write("%f" % np.mean(pmf_array[:, 3]))
         print('Average Std:', np.mean(pmf_array[:, 4]))
         with open(str(self.output_dir)+'/convergence/boost_potential_std.txt', 'w') as f:
-            f.write("%d" % np.mean(pmf_array[:, 4]))
+            f.write("%f" % np.mean(pmf_array[:, 4]))
  
     def interpolate_pmf(self, cutoff):
         print('iterval:', self.iterations)
