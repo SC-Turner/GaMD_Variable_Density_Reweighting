@@ -1,4 +1,5 @@
 from VDR.VDR_Indep import Variable_Density_Reweighting as VDR
+import numpy as np
 import argparse
 import sys
 
@@ -17,8 +18,8 @@ def parse_args():
     parser.add_argument("--emax", type=float, help='Kcal/mol value assigned for unsampled regions of CV-space', required=False, default=8)
     parser.add_argument("--itermax", type=int, help='Generally ignore, cutoff for how many segmentation iterations for VDR', required=False, default=9999)
     parser.add_argument("--conv_points", nargs='+', type=int, help='Cut-off values for VDR segmentation, use multiple values for convergence mode, one value for single mode', required=True)
-    parser.add_argument("--conv_points_num", type-int, help='Number of cut-off data points to use between range specified in --conv_points, only required for --mode convergence")
-    parser.add_argumens("--conv_points_scale", type=str, default='linear', choices=['linear', 'log'])
+    parser.add_argument("--conv_points_num", type=int, help='Number of cut-off data points to use between range specified in --conv_points, only required for --mode convergence')
+    parser.add_argument("--conv_points_scale", type=str, default='linear', choices=['linear', 'log'], help='whether to use a linear or log scale to distribute points across conv_points range')
     parser.add_argument("--output", type=str, help='Output directory', default='output')
     parser.add_argument("--mode", type=str, required=True, help='Whether to evaluate a single cut-off value (mode=single) or evaluate convergence across multiple cut-off values (mode=convergence)',  choices=['single', 'convergence'])
     parser.add_argument("--pbc", default='False', help='Whether to add partial duplicated boundaries if the CV-limits loop around, i.e. phi/psi angles', choices=['True', 'False'])
@@ -30,6 +31,10 @@ def parse_args():
     if args.mode == 'single':
         if len(args.conv_points) != 1:
             parser.error("--mode single, requires one value to --conv_points_range, defines single cutoff value")
+        if args.conv_points_num is not None:
+            parser.error("--mode single does not support --conv_points_num, use --mode convergence or remove")
+        if args.conv_points_scale is not None:
+            parser.error("--mode single does not support --conv_points_scale, use --mode convergence or remove")
     elif args.mode == 'convergence':
         if len(args.conv_points) != 2:
             parser.error("--mode convergence, requires two values to --conv_points, defines range of cutoff values to use in combination with --conv_points_num")
@@ -39,7 +44,7 @@ def parse_args():
     return args
 
 def main():
-    a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, step_multi=args.step_multi, maxiter=args.itermax)
+    a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, maxiter=args.itermax)
 
     if args.mode == 'single':
         i = args.conv_points
@@ -50,12 +55,11 @@ def main():
 
     if args.mode == 'convergence':
         if args.conv_points_scale == 'linear':
-            conv_points=range(args.conv_points_range[0], args.conv_points_range[1], args.conv_points_num)
+            conv_points=range(args.conv_points[0], args.conv_points[1], args.conv_points_num)
         if args.conv_points_scale == 'log':
-            conv_points = np.logspace(np.log10(args.conv_points_range[0]), np.log10(args.conv_points_range[1]), num=args.conv_points_num)
-
-    
-        for count, i in enumerate(args.conv_points):
+            conv_points = np.logspace(np.log10(args.conv_points[0]), np.log10(args.conv_points[1]), num=args.conv_points_num)
+ 
+        for count, i in enumerate(conv_points):
             print('Limit:', str(int(i)))
             a.identify_segments(cutoff=i)
             a.reweight_segments(cutoff=i)
@@ -63,7 +67,7 @@ def main():
                 a.calc_limdata(cutoff=i)
             a.interpolate_pmf(cutoff=i)
             a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title=f'PMF_cutoff_{i}')
-        a.calc_conv(conv_points=args.conv_points)
+        a.calc_conv(conv_points=conv_points)
 
 if __name__ == '__main__':
   args = parse_args()

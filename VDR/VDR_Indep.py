@@ -186,7 +186,7 @@ class Variable_Density_Reweighting:
             pmf_array[:, 0] == np.min(pmf_array[:, 0][np.nonzero(pmf_array[:, 0])]))  # index of max/min PMF universe
         self.pmf_min_distribution = np.append(self.pmf_min_distribution, pmf_array[index, 6])
 
-        self.anharm_total_min = np.append(self.anharm_total_min, anharm(self.pmf_max_distribution[0]))
+        self.anharm_total_min = np.append(self.anharm_total_min, anharm(self.pmf_min_distribution[0]))
         self.dv_avg_distribution_min = np.append(self.dv_avg_distribution_min, pmf_array[index, 3])
         self.dv_std_distribution_min = np.append(self.dv_std_distribution_min, pmf_array[index, 4])
 
@@ -195,8 +195,12 @@ class Variable_Density_Reweighting:
         self.pmf_array_convergence.append(pmf_array[:, 0:3])
 
         print('Average dV:', np.mean(pmf_array[:, 3]))
+        with open(str(self.output_dir)+'/convergence/boost_potential_mean.txt', 'w') as f:
+            f.write("%d" % np.mean(pmf_array[:, 3]))
         print('Average Std:', np.mean(pmf_array[:, 4]))
-
+        with open(str(self.output_dir)+'/convergence/boost_potential_std.txt', 'w') as f:
+            f.write("%d" % np.mean(pmf_array[:, 4]))
+ 
     def interpolate_pmf(self, cutoff):
         print('iterval:', self.iterations)
         a = pd.DataFrame({'rc1': self.data[:, 0],
@@ -223,7 +227,7 @@ class Variable_Density_Reweighting:
         plt.imshow(hist_unre.T, interpolation='nearest', origin='lower',
                    extent=[xedge[0], xedge[-1], yedge[0], yedge[-1]])
         plt.gca().set_aspect(1 / plt.gca().get_data_ratio())
-        plt.savefig(str(self.output_dir)+'Histogram_PMF.png')
+        #plt.savefig(str(self.output_dir)+'Histogram_PMF.png')
         plt.clf()
         dense_points = np.stack([self.x_dense_pmf.ravel() + xdif, self.y_dense_pmf.ravel() + ydif], -1)
         hist_unre = hist_unre.ravel()

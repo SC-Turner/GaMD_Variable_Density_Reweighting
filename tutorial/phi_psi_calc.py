@@ -6,6 +6,7 @@ import numpy as np
 parser = argparse.ArgumentParser()
 parser.add_argument("-traj", help="trajectory", default='output.dcd')
 parser.add_argument("-topol", help="topology", default='../diala.ions.pdb')
+parser.add_argument("-o", help="output", default='data.dat')
 args = parser.parse_args()
 
 def main():
@@ -17,7 +18,7 @@ def main():
     output = Dihedral(ags).run()
     angles = output.angles
     data = np.column_stack((angles, range(0, len(u.trajectory))))
-    np.savetxt('input/data.txt', data)
+    np.savetxt(args.o, data)
 
 if __name__ == '__main__':
   main()
