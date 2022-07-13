@@ -12,7 +12,7 @@ from itertools import chain, repeat
 import os
 
 class Variable_Density_Reweighting:
-    def __init__(self, gamd, data, cores, step_multi, pbc='False', Emax=8, maxiter=9999, temp=300, output_dir='output'):
+    def __init__(self, gamd, data, cores, conv_points, step_multi, pbc='False', Emax=8, maxiter=9999, temp=300, output_dir='output'):
         print('Initialising')
         self.output_dir = str(output_dir)+'/'
         if not os.path.exists(self.output_dir):
@@ -36,7 +36,7 @@ class Variable_Density_Reweighting:
         self.cores = cores
         self.Emax = Emax
         self.T = temp
-
+        self.conv_points = conv_points #just for checking does not exceed no. frames
         self.dimensions = range(0, 3)
         self.iterations = maxiter  # no. of sequential segmentation iterations of the dataset to be performed (Stops automatically once no changes occur)
         self.pmf_min_array = []
@@ -56,6 +56,7 @@ class Variable_Density_Reweighting:
         self.anharm_total_min = []
 
     def identify_segments(self, cutoff):
+
         self.cutoff = int(cutoff)
         old_universe = []
         
@@ -70,8 +71,15 @@ class Variable_Density_Reweighting:
         print('Input Data:')
         print(df)
 
+        if df.shape[0] < cutoff:
+            print(f"Cutoff {self.cutoff}: Cutoff exceeds number of frames, reduce --conv_points")
+
         self.whole_dv_avg = np.mean(df['dV'])
+        with open(str(self.output_dir)+'/convergence/boost_potential_mean.txt', 'w') as f:
+            f.write("%f" % np.mean(df['dV']))
         self.whole_dv_std = np.std(df['dV'])
+        with open(str(self.output_dir)+'/convergence/boost_potential_std.txt', 'w') as f:
+            f.write("%f" % np.std(df['dV']))
 
         self.conv_check = []
         self.universe = df.to_numpy()
@@ -138,7 +146,8 @@ class Variable_Density_Reweighting:
             self.universe = universe
 
             if np.array(old_universe).shape == np.array(self.universe).shape:
-                self.iterations = max(segment_iterations, 6)
+                #self.iterations = max(segment_iterations, 6)
+                self.iterations = segment_iterations
                 break
             else:
                 old_universe = self.universe
@@ -194,13 +203,6 @@ class Variable_Density_Reweighting:
         self.pmf_array = pmf_array
         self.pmf_array_convergence.append(pmf_array[:, 0:3])
 
-        print('Average dV:', np.mean(pmf_array[:, 3]))
-        with open(str(self.output_dir)+'/convergence/boost_potential_mean.txt', 'w') as f:
-            f.write("%f" % np.mean(pmf_array[:, 3]))
-        print('Average Std:', np.mean(pmf_array[:, 4]))
-        with open(str(self.output_dir)+'/convergence/boost_potential_std.txt', 'w') as f:
-            f.write("%f" % np.mean(pmf_array[:, 4]))
- 
     def interpolate_pmf(self, cutoff):
         print('iterval:', self.iterations)
         a = pd.DataFrame({'rc1': self.data[:, 0],
@@ -299,8 +301,6 @@ class Variable_Density_Reweighting:
             limdatapoints_2 = scaler.inverse_transform(limdatapoints)
         limzval = np.repeat(self.Emax, len(limdatapoints_2))
         scattered_points = np.append(datapoints, limdatapoints_2, axis=0)
-        plt.xlim(-180, 180)
-        plt.ylim(-180, 180)
         plt.scatter(datapoints[:, 0], datapoints[:, 1])
         plt.scatter(limdatapoints_2[:, 0], limdatapoints_2[:, 1])
         plt.savefig(str(self.output_dir)+f'/intermediates/distribution_{self.cutoff}.png')

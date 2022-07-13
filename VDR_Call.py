@@ -44,7 +44,7 @@ def parse_args():
     return args
 
 def main():
-    a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, maxiter=args.itermax)
+    a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, maxiter=args.itermax, conv_points=args.conv_points)
 
     if args.mode == 'single':
         i = args.conv_points
