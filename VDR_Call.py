@@ -1,4 +1,4 @@
-from VDR.VDR_Indep import Variable_Density_Reweighting as VDR
+from VDR.VDR_Indep import VariableDensityReweighting as VDR
 import numpy as np
 import argparse
 import sys
@@ -33,8 +33,6 @@ def parse_args():
             parser.error("--mode single, requires one value to --conv_points_range, defines single cutoff value")
         if args.conv_points_num is not None:
             parser.error("--mode single does not support --conv_points_num, use --mode convergence or remove")
-        if args.conv_points_scale is not None:
-            parser.error("--mode single does not support --conv_points_scale, use --mode convergence or remove")
     elif args.mode == 'convergence':
         if len(args.conv_points) != 2:
             parser.error("--mode convergence, requires two values to --conv_points, defines range of cutoff values to use in combination with --conv_points_num")
@@ -46,28 +44,29 @@ def parse_args():
 def main():
     a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, maxiter=args.itermax, conv_points=args.conv_points)
 
-    if args.mode == 'single':
-        i = args.conv_points
-        a.identify_segments(cutoff=i)
-        a.reweight_segments(cutoff=i)
-        a.interpolate_pmf(cutoff=i)
-        a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title='')
-
     if args.mode == 'convergence':
         if args.conv_points_scale == 'linear':
-            conv_points=range(args.conv_points[0], args.conv_points[1], args.conv_points_num)
+            conv_points = range(args.conv_points[0], args.conv_points[1], args.conv_points_num)
         if args.conv_points_scale == 'log':
             conv_points = np.logspace(np.log10(args.conv_points[0]), np.log10(args.conv_points[1]), num=args.conv_points_num)
  
         for count, i in enumerate(conv_points):
             print('Limit:', str(int(i)))
             a.identify_segments(cutoff=i)
-            a.reweight_segments(cutoff=i)
+            a.reweight_segments()
             if count == 0:
-                a.calc_limdata(cutoff=i)
-            a.interpolate_pmf(cutoff=i)
-            a.plot_PMF(xlab='PC1', ylab='PC2', cutoff=i, title=f'PMF_cutoff_{i}')
+                a.calc_limdata()
+            a.interpolate_pmf()
+            a.plot_PMF(xlab='PC1', ylab='PC2', title=f'PMF_cutoff_{i}')
         a.calc_conv(conv_points=conv_points)
+
+    if args.mode == 'single':
+        i = args.conv_points
+        a.identify_segments(cutoff=i)
+        a.reweight_segments()
+        a.interpolate_pmf()
+        a.plot_PMF(xlab='PC1', ylab='PC2', title='')
+        a.extract_minima_clusters()
 
 if __name__ == '__main__':
   args = parse_args()

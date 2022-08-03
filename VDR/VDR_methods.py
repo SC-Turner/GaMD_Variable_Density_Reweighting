@@ -2,12 +2,15 @@ import numpy as np
 import scipy
 
 def calc_inputs(step_multi, gamd, data):
-    weights_input = np.loadtxt(gamd, comments='#', usecols=(1, 6, 7))
-    weights = weights_input[:, 1] + weights_input[:, 2]
-    weights = np.vstack((weights, weights_input[:, 0])).T
+    weights_input = np.loadtxt(gamd, comments='#', usecols=(0, 1, 6, 7))
+    weights = weights_input[:, 2] + weights_input[:, 3]
+    weights = np.vstack((weights, weights_input[:, 1])).T
     # deletes gamd entries with 0 boost potential (equilibration steps), this is a bit of a hack, needs improving
     weights = weights[weights[:, 0] != 0]
     step_size = weights_input[:, 0][0]
+    # deletes data entries where there is no corresponding gamd entry (i.e. first saved frame starts at 0, gamd starts at step 1)
+    index = np.where(weights[:,1] == weights_input[0, 0])
+    weights[:,1] = np.arange(1, len(weights[:, 1])+1)*weights_input[0, 0]
     #np.savetxt('output/weights_example.txt', weights)
 
     if step_multi == 'True': #Saves both equilibration and Production steps to gamd.log
