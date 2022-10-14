@@ -70,17 +70,19 @@ class VariableDensityReweighting:
         old_universe = []
 
         a = pd.DataFrame({'rc1': self.data[:, 0],
-                          'rc2': self.data[:, 1],
-                          'frame': self.data[:, 2]})  # match C
-        b = pd.DataFrame({'frame': self.dV[:, 1],
-                          'dV': self.dV[:, 0]})
+                          'rc2': self.data[:, 1]})  # match C
+        b = pd.DataFrame({'dV': self.dV[:, 0]})
 
-        df = a.merge(b, how='inner', on=['frame'])
+        df = pd.concat([a, b], axis=1)
+        if df.isnull().values.any():
+            print('Warning: NaN values detected, removing nan rows from analysis but check input files')
+            df = df.dropna()
         self.df = df #extract_minima_clusters
 
         print(self.data)
         print(self.dV)
         print(df)
+        
 
         if df.shape[0] < self.cutoff:
             print(f"Cutoff {self.cutoff}: Cutoff exceeds number of frames, reduce --conv_points")
@@ -108,8 +110,7 @@ class VariableDensityReweighting:
                     ymin = -180
                     for x in PBCx_values:
                         for y in PBCy_valyes:
-                            # temp_array = pd.concat([a, b['dV']], axis=1).to_numpy()
-                            temp_array = a.merge(b, how='inner', on=['frame']).to_numpy()
+                            temp_array = pd.concat([a, b], axis=1).to_numpy()
                             temp_array[:, 0] += x
                             temp_array[:, 1] += y
                             index = 0
@@ -177,7 +178,7 @@ class VariableDensityReweighting:
             else:
                 # idx = np.round(np.linspace(0, len(i[:,0]) - 1, int(cutoff/5))).astype(int)
                 # i = i[idx, :]
-                atemp = np.asarray(i[:, 3])
+                atemp = np.asarray(i[:, 2])
                 dV_avg = np.average(atemp)
                 dV_std = np.std(atemp)
                 c1 = beta * dV_avg
@@ -190,6 +191,19 @@ class VariableDensityReweighting:
                 pmf_val = pmf_val + c12  # Delete c12 to not apply reweighting
                 pmf_array.append(
                     [pmf_val, np.mean(i[:, 0]), np.mean(i[:, 1]), dV_avg, dV_std, i, atemp])
+
+        #delete
+        import scipy.stats as stats
+        import math
+        for i in pmf_array:
+            mu = i[3]
+            sigma = i[4]
+            x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
+            plt.plot(x, stats.norm.pdf(x, mu, sigma), color='red')
+        #plt.plot(x, len(self.df)*stats.norm.pdf(x, self.whole_dv_avg, self.whole_dv_std), color='black')
+        plt.savefig('temp.png')
+        plt.clf()
+        #delete
 
         pmf_array = np.array(pmf_array)
         self.pmf_min_array = np.append(self.pmf_min_array, np.min(pmf_array[:, 0]))
@@ -213,14 +227,13 @@ class VariableDensityReweighting:
         self.pmf_array = pmf_array
         self.pmf_array_convergence.append(pmf_array[:, 0:3])
 
-    def interpolate_pmf(self):
+    def interpolate_pmf(self, xlim=None, ylim=None):
         print('iterval:', self.iterations)
         a = pd.DataFrame({'rc1': self.data[:, 0],
-                          'rc2': self.data[:, 1],
-                          'frame': self.data[:, 2]})  # match C
-        b = pd.DataFrame({'frame': self.dV[:, 0],
-                          'dV': self.dV[:, 1]})
-        df = pd.concat([a, b['dV']], axis=1)
+                          'rc2': self.data[:, 1]})  # match C
+        b = pd.DataFrame({'dV': self.dV[:, 0]})
+
+        df = pd.concat([a, b], axis=1)
         df = df.to_numpy()
 
         self.x_dense_pmf, self.y_dense_pmf = np.meshgrid(
@@ -308,6 +321,10 @@ class VariableDensityReweighting:
         scattered_points = np.append(datapoints, limdatapoints_2, axis=0)
         plt.scatter(datapoints[:, 0], datapoints[:, 1])
         plt.scatter(limdatapoints_2[:, 0], limdatapoints_2[:, 1])
+        if xlim != None:
+            plt.xlim((xlim[0], xlim[1]))
+        if ylim != None:
+            plt.ylim((ylim[0], ylim[1]))
         plt.savefig(str(self.output_dir) + f'/intermediates/distribution_{self.cutoff}.png')
         plt.clf()
 
@@ -381,16 +398,25 @@ class VariableDensityReweighting:
         limdatapoints_2 = scaler.inverse_transform(limdatapoints)
         self.limdatapoints = limdatapoints_2
 
-    def plot_PMF(self, xlab, ylab, title):
+    def plot_PMF(self, xlab, ylab, title, xlim=None, ylim=None, cmap='jet'):
         self.PMF = np.nan_to_num(self.PMF, nan=int(self.Emax)).T
+        cmap_ = plt.get_cmap(cmap)
+        background = cmap_(256)
 
-        plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap='jet', levels=50)
+        plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap=cmap, levels=256)
         plt.colorbar()
         plt.savefig(str(self.output_dir) + f'/intermediates/bias_{self.cutoff}.png')
         plt.clf()
 
-        plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.PMF, cmap='jet', levels=50)
+        fig = plt.figure()
+        ax = plt.axes()
+        ax.set_facecolor(background)
+        plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.PMF, cmap=cmap, levels=256)
         plt.colorbar()
+        if xlim != None:
+            plt.xlim((xlim[0], xlim[1]))
+        if ylim != None:
+            plt.ylim((ylim[0], ylim[1]))
         plt.savefig(str(self.output_dir) + f'/intermediates/PMF_{self.cutoff}.png')
 
         z_dense = np.add(self.z_dense, self.PMF)
@@ -405,7 +431,12 @@ class VariableDensityReweighting:
         ax = plt.axes()
         ax.set_xlabel(xlab, fontsize=16)
         ax.set_ylabel(ylab, fontsize=16)
-        contourf_ = ax.contourf(self.x_dense_pmf, self.y_dense_pmf, z_dense, cmap='jet', levels=50)
+        ax.set_facecolor(background)
+        contourf_ = ax.contourf(self.x_dense_pmf, self.y_dense_pmf, z_dense, cmap=cmap, levels=256)
+        if xlim != None:
+            plt.xlim((xlim[0], xlim[1]))
+        if ylim != None:
+            plt.ylim((ylim[0], ylim[1]))
         cbar = fig.colorbar(contourf_)
         cbar.set_label('Kcal/mol\n', fontsize=16)
         plt.savefig(str(self.output_dir) + f'PMF/2C_PMF_{self.cutoff}.png')
@@ -487,7 +518,7 @@ class VariableDensityReweighting:
                    np.column_stack((conv_points, self.anharm_total_max)))
         plt.clf()
 
-    def extract_minima_clusters(self, mode='mdanalysis'):
+    def extract_minima_clusters(self, mode='mdanalysis', topology='protein.pdb', trajectory='trajectory.xtc', nframes=100):
     #     if mode=='Inflecs':
     #         sys.path.append('/mainfs/scratch/sct1g15/software/InfleCS-free-energy-clustering-tutorial-master/')
     #         import free_energy_clustering as FEC
@@ -561,13 +592,20 @@ class VariableDensityReweighting:
             peak_index = np.where(peaks == True)
             clusters = np.column_stack((peak_index[1], peak_index[0], arr2D[peak_index]))
             clusters = clusters[clusters[:, 2].argsort()]
-            u = mda.Universe('../init_startfiles/PLP.leap.pdb', '../production_new/E2_12/protein_cat.xtc')
+            u = mda.Universe(topology, trajectory)
             protein = u.select_atoms("protein")
             for count, i in enumerate(clusters):
                 cluster_index = np.where((self.df['rc1'] > self.x_dense_pmf[0][int(i[0])]) & (self.df['rc1'] < self.x_dense_pmf[0][int(i[0])+1]) & (self.df['rc2'] > self.y_dense_pmf[int(i[1])][0]) & (self.df['rc2'] < self.y_dense_pmf[int(i[1])+1][0]))
                 cluster_mid_x = self.x_dense_pmf[0][int(i[0])] + (self.x_dense_pmf[0][int(i[0])+1] - self.x_dense_pmf[0][int(i[0])])/2
                 cluster_mid_y = self.y_dense_pmf[int(i[1])][0] + (self.y_dense_pmf[int(i[1])+1][0] - self.y_dense_pmf[int(i[1])][0])/2
-                np.savetxt(f'{self.output_dir}clusters/Cluster_{count}_index.ndx', cluster_index, header=f'rc1:{cluster_mid_x}, rc2:{cluster_mid_y}.txt')
+ 
+                print(cluster_index[0])
+                cluster_index=cluster_index[0]
+                print(np.linspace(0, len(cluster_index)-1, nframes))
+                print(np.round(np.linspace(0, len(cluster_index)-1, nframes)))
+                print(np.round(np.linspace(0, len(cluster_index)-1, nframes)).astype(int))
+                cluster_index = cluster_index[np.round(np.linspace(0, len(cluster_index)-1, nframes)).astype(int)]
+                np.savetxt(f'{self.output_dir}clusters/Cluster_{count}_index.ndx', cluster_index, header=f'rc1:{cluster_mid_x}, rc2:{cluster_mid_y}')
                 with mda.Writer(f'{self.output_dir}clusters/Cluster_{count}.pdb', protein.n_atoms) as W:
                     for ts in u.trajectory[np.array(cluster_index).flatten()]:
                         W.write(protein)

@@ -37,19 +37,5 @@ def run_sim():
     restart = False
     runner.run(restart)
 
-def calc_angles():
-    from os.path import exists, getsize
-    print(exists('output/output.dcd'))
-    print(getsize('output/output.dcd'))
-    u = mda.Universe('input/diala.ions.parmtop', 'output/output.dcd', in_memory=True, topology_format='PRMTOP')
-    ags1 = [res.phi_selection() for res in u.residues]
-    ags2 = [res.psi_selection() for res in u.residues]
-    ags = list((ags1[1], ags2[1]))
-    output = Dihedral(ags).run()
-    angles = output.angles
-    data = np.column_stack((angles, [ts.frame for ts in u.trajectory]))
-    np.savetxt('input/data_example.txt', data)
-
 if __name__ == '__main__':
     run_sim()
-    calc_angles()

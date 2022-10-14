@@ -17,8 +17,7 @@ def main():
     ags = list((ags1[1], ags2[1]))
     output = Dihedral(ags).run()
     angles = output.angles
-    data = np.column_stack((angles, range(0, len(u.trajectory))))
-    np.savetxt(args.o, data)
+    np.savetxt(args.o, angles)
 
 if __name__ == '__main__':
   main()

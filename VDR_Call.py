@@ -26,6 +26,11 @@ def parse_args():
     parser.add_argument("--step_multi", type=str, default='True',
                         help='Whether to multiply frames column in CV datafile by timestep identified in gamd weight input file, to match timesteps in gamd weight input file',
                         choices=['True', 'False'])
+    parser.add_argument("--xlim", type=float, help='x-axis limits for graph plotting, default uses max/min values. Example "-3, -3"', default=None, nargs=2)
+    parser.add_argument("--ylim", type=float, help='y-axis limits for graph plotting, default uses max/min values. Example "-3, -3"', default=None, nargs=2)
+    parser.add_argument("--topol", type=str, help='Topology file for cluster output', required=False, default='protein.pdb')
+    parser.add_argument("--traj", type=str, help='Trajectory file for cluster output', required=False, default='protein.pdb')
+    parser.add_argument("--cluster_frames", type=int, help='Number of frames to include per local minima during clustering', required=False, default=100)
     args, leftovers = parser.parse_known_args()
 
     if args.mode == 'single':
@@ -56,8 +61,8 @@ def main():
             a.reweight_segments()
             if count == 0:
                 a.calc_limdata()
-            a.interpolate_pmf()
-            a.plot_PMF(xlab='PC1', ylab='PC2', title=f'PMF_cutoff_{i}')
+            a.interpolate_pmf(xlim=args.xlim, ylim=args.ylim)
+            a.plot_PMF(xlab='CV1', ylab='CV2', title=f'PMF_cutoff_{i}', xlim=args.xlim, ylim=args.ylim)
         a.calc_conv(conv_points=conv_points)
 
     if args.mode == 'single':
@@ -65,8 +70,8 @@ def main():
         a.identify_segments(cutoff=i)
         a.reweight_segments()
         a.interpolate_pmf()
-        a.plot_PMF(xlab='PC1', ylab='PC2', title='')
-        a.extract_minima_clusters()
+        a.plot_PMF(xlab='CV1', ylab='CV2', title='')
+        a.extract_minima_clusters(topology=args.topol, trajectory=args.traj, nframes=args.cluster_frames)
 
 if __name__ == '__main__':
   args = parse_args()
