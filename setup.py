@@ -112,7 +112,7 @@ setup(
     #                        'VDR_Combine = VDR.combine_replicas:main'],
     #},
     entry_points={
-        'console_scripts': ['VDR_Call = VDR.VDR_Call:main'],
+        'console_scripts': ['VDR = VDR.VDR:main'],
     },
     install_requires=REQUIRED,
     #scripts=['VDR_Call.py'],
