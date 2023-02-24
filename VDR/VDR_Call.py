@@ -1,16 +1,12 @@
+#!/usr/bin/env python
 from VDR.VDR_Indep import VariableDensityReweighting as VDR
 import numpy as np
 import argparse
 import sys
 
-#Example Input Script (Windows)
-#python ..\..\VDR_Clean\VDR_Call.py --gamd Amber19SB_diala_E2_dual_600ns\weights_E2_concat.dat --data Amber19SB_diala_E2_dual_600ns\data_E2_concat.dat --cores 6 --emax 8 --itermax 6 --conv_points 10 100 1000 10000 100000 1000000 --mode convergence --output E2_dual_600ns
-#
-
 print('Running VDR:')
 
 def parse_args():
-    print('ARGS test')
     parser = argparse.ArgumentParser(description="Variable Density Reweighting of Gaussian Accelerated Molecular Dynamics Simulations")
     parser.add_argument("--gamd", help="gamd weights .dat file location, generated from GaMD simulation", required=True)
     parser.add_argument("--data", help="Datafile location containing CV values and timestep, formatted as in input/data_example.txt", required=True)
@@ -43,10 +39,11 @@ def parse_args():
             parser.error("--mode convergence, requires two values to --conv_points, defines range of cutoff values to use in combination with --conv_points_num")
         if args.conv_points_num is None:
             parser.error("--conv_points_num, requires specification of how many cutoff values to use between defined range in --conv_points")
-        
+
     return args
 
 def main():
+    args = parse_args()
     a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, maxiter=args.itermax, conv_points=args.conv_points)
 
     if args.mode == 'convergence':
@@ -71,9 +68,8 @@ def main():
         a.reweight_segments()
         a.interpolate_pmf()
         a.plot_PMF(xlab='CV1', ylab='CV2', title='')
-        a.extract_minima_clusters(topology=args.topol, trajectory=args.traj, nframes=args.cluster_frames)
+        #a.extract_minima_clusters(topology=args.topol, trajectory=args.traj, nframes=args.cluster_frames)
 
 if __name__ == '__main__':
-  args = parse_args()
-  main()
+    main()
 

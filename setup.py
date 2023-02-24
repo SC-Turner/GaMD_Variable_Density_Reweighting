@@ -107,10 +107,15 @@ setup(
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
-    # entry_points={
-    #     'console_scripts': ['mycli=mymodule:cli'],
-    # },
+    #entry_points={
+    #    'console_scripts': ['VDR_Call = VDR.VDR_Call:main',
+    #                        'VDR_Combine = VDR.combine_replicas:main'],
+    #},
+    entry_points={
+        'console_scripts': ['VDR_Call = VDR.VDR_Call:main'],
+    },
     install_requires=REQUIRED,
+    #scripts=['VDR_Call.py'],
     extras_require=EXTRAS,
     include_package_data=True,
     license='MIT',
