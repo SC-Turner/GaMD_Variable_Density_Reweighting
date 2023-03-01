@@ -60,6 +60,7 @@ class VariableDensityReweighting:
         self.dv_std_distribution_min = []
         self.anharm_total_max = []
         self.anharm_total_min = []
+        self.datanum = []
 
     def identify_segments(self, cutoff):
 
@@ -206,6 +207,9 @@ class VariableDensityReweighting:
         #delete
 
         pmf_array = np.array(pmf_array)
+        
+        self.datanum = np.append(self.datanum, len(pmf_array[:, 0]))
+
         self.pmf_min_array = np.append(self.pmf_min_array, np.min(pmf_array[:, 0]))
         self.pmf_max_array = np.append(self.pmf_max_array, np.max(pmf_array[:, 0][np.nonzero(pmf_array[:, 0])]))
         index = np.where(
@@ -517,6 +521,37 @@ class VariableDensityReweighting:
         np.savetxt(str(self.output_dir) + '/convergence/anharm_max.dat',
                    np.column_stack((conv_points, self.anharm_total_max)))
         plt.clf()
+        plt.plot(conv_points, self.datanum)
+        plt.xscale('log')
+        plt.ylabel('Number of Datapoints')
+        plt.xlabel('VDR Cutoff (frames)')
+        plt.savefig(str(self.output_dir) + '/convergence/ndata.png')
+        np.savetxt(str(self.output_dir) + '/convergence/ndata.dat',
+                   np.column_stack((conv_points, self.datanum)))
+        plt.clf()
+    
+    def determine_convergence(self, output='output', error_tol=0.25, mindata=20):
+        ndata_df = np.loadtxt(str(output) + '/convergence/ndata.dat')
+        stdmin_df = np.loadtxt(str(output) + '/convergence/std_min.dat')
+        prior = []
+        done=0
+        for i in zip(ndata_df, stdmin_df):
+            ndata1, stdmin1 = i
+            prior = ndata1[0]
+            if ndata1[0] == stdmin1[0]:
+                if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol):
+                    print(f'Point before convergence: Cut-off = {prior}')
+                    print(f'Convergence Reached: Cut-off = {ndata1[0]}')
+                    done=1
+                    break
+                else:
+                    continue
+            else:
+                print('Error: std_min.dat and ndata.dat have different cutoff values, check inputs')
+                break
+            if done==1:
+                print('Warning: Convergence Criteria not reached, consider adjusting error tolerance or generate more simulation data')
+        
 
     def extract_minima_clusters(self, mode='mdanalysis', topology='protein.pdb', trajectory='trajectory.xtc', nframes=100):
     #     if mode=='Inflecs':

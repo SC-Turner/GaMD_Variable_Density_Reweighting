@@ -48,7 +48,7 @@ def main():
 
     if args.mode == 'convergence':
         if args.conv_points_scale == 'linear':
-            conv_points = range(args.conv_points[0], args.conv_points[1], args.conv_points_num)
+            conv_points = np.linspace(args.conv_points[0], args.conv_points[1], num=args.conv_points_num)
         if args.conv_points_scale == 'log':
             conv_points = np.logspace(np.log10(args.conv_points[0]), np.log10(args.conv_points[1]), num=args.conv_points_num)
  
@@ -61,6 +61,7 @@ def main():
             a.interpolate_pmf(xlim=args.xlim, ylim=args.ylim)
             a.plot_PMF(xlab='CV1', ylab='CV2', title=f'PMF_cutoff_{i}', xlim=args.xlim, ylim=args.ylim)
         a.calc_conv(conv_points=conv_points)
+        a.determine_convergence(output=args.output)
 
     if args.mode == 'single':
         i = args.conv_points
