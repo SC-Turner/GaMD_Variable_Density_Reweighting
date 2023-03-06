@@ -21,7 +21,7 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
-REQUIRED = [
+REQUIRED = ['numpy', 'MDAnalysis', 'scipy>=1.10.1', 'argparse', 'matplotlib', 'pandas', 'sklearn'
     # 'requests', 'maya', 'records',
 ]
 
