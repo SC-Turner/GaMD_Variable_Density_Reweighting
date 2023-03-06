@@ -141,9 +141,7 @@ class VariableDensityReweighting:
                     output2.append(x)
                 if type(x) != tuple:
                     pos.append(x)
-
             pos = list(chain.from_iterable(pos))
-
             self.universe = list(chain.from_iterable(output2))
             pool.close()
             pool.join()
@@ -231,7 +229,7 @@ class VariableDensityReweighting:
         self.pmf_array = pmf_array
         self.pmf_array_convergence.append(pmf_array[:, 0:3])
 
-    def interpolate_pmf(self, xlim=None, ylim=None):
+    def interpolate_pmf(self, xlim=None, ylim=None, xlab='CV1', ylab='CV2'):
         print('iterval:', self.iterations)
         a = pd.DataFrame({'rc1': self.data[:, 0],
                           'rc2': self.data[:, 1]})  # match C
@@ -329,6 +327,8 @@ class VariableDensityReweighting:
             plt.xlim((xlim[0], xlim[1]))
         if ylim != None:
             plt.ylim((ylim[0], ylim[1]))
+        plt.xlabel(xlab)
+        plt.ylabel(ylab)
         plt.savefig(str(self.output_dir) + f'/intermediates/distribution_{self.cutoff}.png')
         plt.clf()
 
@@ -407,20 +407,33 @@ class VariableDensityReweighting:
         cmap_ = plt.get_cmap(cmap)
         background = cmap_(256)
 
-        plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap=cmap, levels=256)
-        plt.colorbar()
+        fig = plt.figure()
+        ax = plt.axes()
+        contourf_ = ax.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap=cmap, levels=256)
+        cbar = fig.colorbar(contourf_)
+        cbar.set_label('Free Energy (kcal/mol)\n')
+        if xlim != None:
+            plt.xlim((xlim[0], xlim[1]))
+        if ylim != None:
+            plt.ylim((ylim[0], ylim[1]))
+        plt.xlabel(xlab)
+        plt.ylabel(ylab)
         plt.savefig(str(self.output_dir) + f'/intermediates/bias_{self.cutoff}.png')
         plt.clf()
 
         fig = plt.figure()
         ax = plt.axes()
         ax.set_facecolor(background)
-        plt.contourf(self.x_dense_pmf, self.y_dense_pmf, self.PMF, cmap=cmap, levels=256)
-        plt.colorbar()
+        ax.set_xlabel(xlab)
+        ax.set_ylabel(ylab)
+        contourf_ = ax.contourf(self.x_dense_pmf, self.y_dense_pmf, self.PMF, cmap=cmap, levels=256)
+        cbar = fig.colorbar(contourf_)
+        cbar.set_label('Free Energy (kcal/mol)\n')
         if xlim != None:
             plt.xlim((xlim[0], xlim[1]))
         if ylim != None:
             plt.ylim((ylim[0], ylim[1]))
+
         plt.savefig(str(self.output_dir) + f'/intermediates/PMF_{self.cutoff}.png')
 
         z_dense = np.add(self.z_dense, self.PMF)
@@ -433,8 +446,8 @@ class VariableDensityReweighting:
         plt.clf()
         fig = plt.figure()
         ax = plt.axes()
-        ax.set_xlabel(xlab, fontsize=16)
-        ax.set_ylabel(ylab, fontsize=16)
+        ax.set_xlabel(xlab)
+        ax.set_ylabel(ylab)
         ax.set_facecolor(background)
         contourf_ = ax.contourf(self.x_dense_pmf, self.y_dense_pmf, z_dense, cmap=cmap, levels=256)
         if xlim != None:
@@ -442,7 +455,7 @@ class VariableDensityReweighting:
         if ylim != None:
             plt.ylim((ylim[0], ylim[1]))
         cbar = fig.colorbar(contourf_)
-        cbar.set_label('Kcal/mol\n', fontsize=16)
+        cbar.set_label('Free Energy (kcal/mol)\n')
         plt.savefig(str(self.output_dir) + f'PMF/2C_PMF_{self.cutoff}.png')
         plt.clf()
 
@@ -530,27 +543,31 @@ class VariableDensityReweighting:
                    np.column_stack((conv_points, self.datanum)))
         plt.clf()
     
-    def determine_convergence(self, output='output', error_tol=0.25, mindata=20):
+    def determine_convergence(self, output='output', error_tol=0.1, mindata=10):
         ndata_df = np.loadtxt(str(output) + '/convergence/ndata.dat')
         stdmin_df = np.loadtxt(str(output) + '/convergence/std_min.dat')
         prior = []
         done=0
+        print('test')
         for i in zip(ndata_df, stdmin_df):
             ndata1, stdmin1 = i
-            prior = ndata1[0]
+            print(ndata1)
+            print(stdmin1)
+            print(error_tol)
+            print(mindata)
+            print(self.whole_dv_std)
             if ndata1[0] == stdmin1[0]:
                 if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol):
                     print(f'Point before convergence: Cut-off = {prior}')
                     print(f'Convergence Reached: Cut-off = {ndata1[0]}')
                     done=1
                     break
-                else:
-                    continue
             else:
                 print('Error: std_min.dat and ndata.dat have different cutoff values, check inputs')
                 break
-            if done==1:
-                print('Warning: Convergence Criteria not reached, consider adjusting error tolerance or generate more simulation data')
+            prior = ndata1[0]
+        if done==0:
+            print('Warning: Convergence Criteria not reached, consider adjusting error tolerance or generate more simulation data')
         
 
     def extract_minima_clusters(self, mode='mdanalysis', topology='protein.pdb', trajectory='trajectory.xtc', nframes=100):
