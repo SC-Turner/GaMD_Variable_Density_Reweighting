@@ -58,6 +58,7 @@ class VariableDensityReweighting:
         self.dv_avg_distribution_min = []
         self.dv_std_distribution_max = []
         self.dv_std_distribution_min = []
+        self.SE_distribution = []
         self.anharm_total_max = []
         self.anharm_total_min = []
         self.datanum = []
@@ -79,11 +80,6 @@ class VariableDensityReweighting:
             print('Warning: NaN values detected, removing nan rows from analysis but check input files')
             df = df.dropna()
         self.df = df #extract_minima_clusters
-
-        print(self.data)
-        print(self.dV)
-        print(df)
-        
 
         if df.shape[0] < self.cutoff:
             print(f"Cutoff {self.cutoff}: Cutoff exceeds number of frames, reduce --conv_points")
@@ -180,6 +176,8 @@ class VariableDensityReweighting:
                 atemp = np.asarray(i[:, 2])
                 dV_avg = np.average(atemp)
                 dV_std = np.std(atemp)
+                #dV_std = scipy.stats.median_abs_deviation(atemp, scale=1.4826)
+                #dV_std = scipy.stats.median_abs_deviation(atemp, scale='normal')
                 c1 = beta * dV_avg
                 c2 = 0.5 * beta ** 2 * dV_std ** 2
                 c1 = -np.multiply(1.0 / beta, c1)
@@ -190,19 +188,7 @@ class VariableDensityReweighting:
                 pmf_val = pmf_val + c12  # Delete c12 to not apply reweighting
                 pmf_array.append(
                     [pmf_val, np.mean(i[:, 0]), np.mean(i[:, 1]), dV_avg, dV_std, i, atemp])
-
-        #delete
-        import scipy.stats as stats
-        import math
-        for i in pmf_array:
-            mu = i[3]
-            sigma = i[4]
-            x = np.linspace(mu - 3*sigma, mu + 3*sigma, 100)
-            plt.plot(x, stats.norm.pdf(x, mu, sigma), color='red')
-        #plt.plot(x, len(self.df)*stats.norm.pdf(x, self.whole_dv_avg, self.whole_dv_std), color='black')
-        plt.savefig('temp.png')
-        plt.clf()
-        #delete
+        min_len_array = []
 
         pmf_array = np.array(pmf_array)
         
@@ -224,6 +210,11 @@ class VariableDensityReweighting:
         self.anharm_total_min = np.append(self.anharm_total_min, anharm(self.pmf_min_distribution[0]))
         self.dv_avg_distribution_min = np.append(self.dv_avg_distribution_min, pmf_array[index, 3])
         self.dv_std_distribution_min = np.append(self.dv_std_distribution_min, pmf_array[index, 4])
+
+        for i in self.universe:
+            min_len_array.append(len(i))
+        min_len = min(min_len_array)
+        self.SE_distribution = np.append(self.SE_distribution, self.whole_dv_std/(min_len)**0.5)
 
         pmf_array[:, 0] -= np.min(pmf_array[:, 0])  # normalises the array to 0 minimum
         self.pmf_array = pmf_array
@@ -463,19 +454,6 @@ class VariableDensityReweighting:
 
         del self.universe
 
-        # fig = plt.figure()
-        # ax = plt.axes()
-        # ax.set_xlabel(xlab, fontsize=16)
-        # ax.set_ylabel(ylab, fontsize=16)
-        # contourf_ = ax.contourf(self.x_dense_pmf, self.y_dense_pmf, self.z_dense, cmap='jet', levels=(0, 1, 2, 3, 4, 5, 6, 7, 8))
-        # # contourf_ = ax.imshow((x_dense, y_dense), cmap='jet')
-        # # plt.xlim(-180, 180)
-        # # plt.ylim(-180, 180)
-        # cbar = fig.colorbar(contourf_)
-        # cbar.set_label('Kcal/mol\n', fontsize=16)
-        # plt.savefig(str(self.output_dir)+f'2C_PMF_{cutoff}_Limzmod_simple_{title}.png')
-        # plt.clf()
-
     def calc_conv(self, conv_points):
         plt.plot(conv_points, self.dv_avg_distribution_min)
         plt.hlines(self.whole_dv_avg, np.min(conv_points), np.max(conv_points), color='red',
@@ -542,28 +520,31 @@ class VariableDensityReweighting:
         np.savetxt(str(self.output_dir) + '/convergence/ndata.dat',
                    np.column_stack((conv_points, self.datanum)))
         plt.clf()
+        plt.plot(conv_points, self.SE_distribution)
+        plt.xscale('log')
+        plt.ylabel('Maximum Standard Error (Kcal/mol)')
+        plt.xlabel('VDR Cutoff (frames)')
+        plt.savefig(str(self.output_dir) + '/convergence/StdErr_plot.png')
+        np.savetxt(str(self.output_dir) + '/convergence/StdErr.dat',
+                   np.column_stack((conv_points, self.SE_distribution)))
+        plt.clf()
     
-    def determine_convergence(self, output='output', error_tol=0.1, mindata=10):
+    def determine_convergence(self, output='output', error_tol=0.02, mindata=10):
         ndata_df = np.loadtxt(str(output) + '/convergence/ndata.dat')
         stdmin_df = np.loadtxt(str(output) + '/convergence/std_min.dat')
+        StdErr_df = np.loadtxt(str(output) + '/convergence/StdErr.dat')
         prior = []
         done=0
-        print('test')
-        for i in zip(ndata_df, stdmin_df):
-            ndata1, stdmin1 = i
-            print(ndata1)
-            print(stdmin1)
-            print(error_tol)
-            print(mindata)
-            print(self.whole_dv_std)
-            if ndata1[0] == stdmin1[0]:
-                if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol):
+        for i in zip(ndata_df, stdmin_df, StdErr_df):
+            ndata1, stdmin1, stderr = i
+            if ndata1[0] == stdmin1[0] == stderr[0]:
+                if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol) & (stderr[1] < error_tol):
                     print(f'Point before convergence: Cut-off = {prior}')
                     print(f'Convergence Reached: Cut-off = {ndata1[0]}')
                     done=1
                     break
             else:
-                print('Error: std_min.dat and ndata.dat have different cutoff values, check inputs')
+                print('Error: std_min.dat, ndata.dat, StdErr.dat have different cutoff values, check inputs')
                 break
             prior = ndata1[0]
         if done==0:
@@ -571,10 +552,6 @@ class VariableDensityReweighting:
         
 
     def extract_minima_clusters(self, mode='mdanalysis', topology='protein.pdb', trajectory='trajectory.xtc', nframes=100):
-    #     if mode=='Inflecs':
-    #         sys.path.append('/mainfs/scratch/sct1g15/software/InfleCS-free-energy-clustering-tutorial-master/')
-    #         import free_energy_clustering as FEC
-
         if mode=='normal':
             print(self.output_PMF)
             from scipy.ndimage.filters import minimum_filter, maximum_filter
