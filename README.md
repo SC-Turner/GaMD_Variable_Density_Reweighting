@@ -1,20 +1,22 @@
-# GaMD_Variable_Density_Reweighting
-Improved reweighting of GaMD simulation results in 2D collective variable space
+# GaMD Variable Density Reweighting (VDR)
+Reweighting of GaMD simulation trajectories in 2D collective variable space.
 
-## Introduction
-VDR is a reweighting methodology developed as an improvement to the original PyReweighting script by Yinglong Miao (2014)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-## Tutorial
-This tutorial provides a basic script to run an alanine dipeptide simulation from a preconfigured topology, using the OpenMM GaMD implementation
+# Introduction
+VDR is a reweighting methodology developed as an improvement to the original PyReweighting script by Yinglong Miao (2014).
 
-If you have already run your GaMD simulations you may skip this step.
-### To run a test alanine simulation from scratch using openmm:
-Starting from the tutorial directory
-``` 
-python gamd_testsim.py
-``` 
+# Installation
 
-## To reweight your trajectories along a given CV space
+
+# Tutorial
+This tutorial will take you through parameterisation and reweighting of a Gaussian Accelerated MD simulation.
+
+## Calculate the GaMD parameters
+'''
+
+'''
+
 This project has been designed so that users can call the VDR_Call.py script directly from the command line directly after a GaMD simulation with no further modification, e.g:
 ``` 
 python ../VDR_Call.py --gamd output/gamd.log --data input/data_example.txt --cores 6 --emax 8 --mode convergence --conv_points 10 25 50 75 100 200 --pbc True --output output_VDR --multi_step True
