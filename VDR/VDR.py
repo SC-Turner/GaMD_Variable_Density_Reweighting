@@ -39,6 +39,9 @@ def parse_args():
     parser.add_argument("--ylab", type=str,
                         help='Y-axis label for plotting', required=False,
                         default='CV2')
+    parser.add_argument("--divcut", type=int, default=1,
+                        help='divcut reduces cutoff requirements if it allows segmentation of a larger quadrant, recommended to leave as 1 for no modification')
+
     args, leftovers = parser.parse_known_args()
 
     if args.mode == 'single':
@@ -53,7 +56,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    a = VDR(gamd=args.gamd, data=args.data, step_multi=args.step_multi, cores=args.cores, Emax=args.emax, output_dir=args.output, pbc=args.pbc, maxiter=args.itermax, conv_points=args.conv_points)
+    a = VDR(gamd=args.gamd, data=args.data, cores=args.cores, emax=args.emax,
+            output_dir=args.output, pbc=args.pbc, maxiter=args.itermax, conv_points=args.conv_points, divcut=args.divcut)
 
     if args.mode == 'convergence':
         if args.conv_points_num is not None:
@@ -66,7 +70,7 @@ def main():
  
         for count, i in enumerate(conv_points):
             print('Limit:', str(int(i)))
-            a.identify_segments(cutoff=i)
+            a.identify_segments(cutoff=i, xlim=args.xlim, ylim=args.ylim)
             a.reweight_segments()
             if count == 0:
                 a.calc_limdata()
@@ -77,7 +81,7 @@ def main():
 
     if args.mode == 'single':
         i = args.conv_points
-        a.identify_segments(cutoff=i)
+        a.identify_segments(cutoff=i, xlim=args.xlim, ylim=args.ylim)
         a.reweight_segments()
         a.interpolate_pmf(xlim=args.xlim, ylim=args.ylim, xlab=args.xlab, ylab=args.ylab)
         a.plot_PMF(xlab=args.xlab, ylab=args.ylab, title=f'PMF cutoff {i}', xlim=args.xlim, ylim=args.ylim)

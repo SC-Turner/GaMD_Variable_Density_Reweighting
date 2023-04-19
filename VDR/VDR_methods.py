@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 
-def calc_inputs(step_multi, gamd, data):
+def calc_inputs(gamd, data):
     weights_input = np.loadtxt(gamd, comments='#', usecols=(0, 1, 6, 7))
     weights = weights_input[:, 2] + weights_input[:, 3] 
     weights_output = np.vstack((weights, weights_input[:, 1])).T
@@ -10,13 +10,11 @@ def calc_inputs(step_multi, gamd, data):
 
     return weights_output, data
 
-def segment_data(temp_universe, pos, cutoff):
+def segment_data(temp_universe, pos, cutoff, divcut=1):
     #Segment Function
-    div_cut = 1
+    div_cut = divcut
     if isinstance(temp_universe, str)  == True:
         miniverse = 'nan'
-    # if isinstance(temp_universe, float) == True:
-    #     miniverse = 'nan'
     else:
         vertices_new = []
         vertices_new.append(
@@ -52,7 +50,6 @@ def segment_data(temp_universe, pos, cutoff):
                     temp_universe[..., 1] <= vertices_new[1][1])]
 
         # Selection Conditions
-        # if all 4 segmented boxes have >100 datapoints condition
         pos_update = []
         if (TL[..., 0].shape[0] > cutoff) & \
                 (TR[..., 0].shape[0] > cutoff) & \
@@ -98,8 +95,6 @@ def segment_data(temp_universe, pos, cutoff):
     return miniverse, pos_update
 
 def datamax_calc(datapoint, datapoints_norm):
-    #print(datapoint) #array
-    #print(datapoints_norm) #reference point
     distout = scipy.spatial.distance.cdist(np.array(datapoints_norm)[np.newaxis, :], np.array(datapoint))
     distout = np.min(distout[np.nonzero(distout)])
     return distout
