@@ -1,33 +1,58 @@
 # GaMD Variable Density Reweighting (VDR)
 Reweighting of GaMD simulation trajectories in 2D collective variable space.
 
+[![PyPI package](https://img.shields.io/badge/pip%20install-example--pypi--package-brightgreen)](https://pypi.org/project/example-pypi-package/) 
+[![version number](https://img.shields.io/pypi/v/example-pypi-package?color=green&label=version)](https://github.com/tomchen/example_pypi_package/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 # Introduction
 VDR is a reweighting methodology developed as an improvement to the original PyReweighting script by Yinglong Miao (2014).
 
 # Installation
-
+## Using pip
+``` 
+pip install <UPDATE PYPI>
+``` 
+## From tarball
+``` 
+git clone https://github.com/sct1g15/GaMD_Variable_Density_Reweighting.git
+cd GaMD_Variable_Density_Reweighting
+python setup.py install
+``` 
 
 # Tutorial
 This tutorial will take you through parameterisation and reweighting of a Gaussian Accelerated MD simulation.
 
 ## Calculate the GaMD parameters
-'''
+The VDR_param command calculates the highest standard deviation limits applicable to the amount of simulation frames you plan to save to your GaMD output trajectory. Default parameters assume a 0.01 anharmonicity tolerance, 0.02 kcal/mol standard error and 100 generated local clusters.
+``` 
+VDR_param --frames 950000
+``` 
+## Run GaMD Simulation
+Run your GaMD simulation, where the sum of the standard deviation limits used, should not exceed the value output by the VDR_param command.
 
-'''
+## Calculate CV values
+Calculate the values of your CV of interest from the GaMD trajectory. This will vary between simulations, but an example script for calculating phi and psi angles from an alanine dipeptide example simulation have been provided in tutorial/phi_psi_calc.py. Formatting should match that in tutorial/data_example.dat, i.e. white spaced deliminated with three columns for CV1, CV2, frame number.
 
-This project has been designed so that users can call the VDR_Call.py script directly from the command line directly after a GaMD simulation with no further modification, e.g:
+## Combine Repeats (Optional)
+VDR_comb supports multiple inputs if multiple repeats were used to concatenate results. This will output a data_concat.dat and gamd_concat.log file.
 ``` 
-python ../VDR_Call.py --gamd output/gamd.log --data input/data_example.txt --cores 6 --emax 8 --mode convergence --conv_points 10 25 50 75 100 200 --pbc True --output output_VDR --multi_step True
+VDR_comb --data data1.dat data2.dat data3.dat data4.dat --gamd gamd1.log gamd2.log gamd3.log gamd4.log
 ``` 
-For details on the arguments, you can use
-``` 
-python ../VDR_Call.py -help
-``` 
-Example formatting for the input files can be found in the tutorial/input folder
 
-gamd.log files generated from GaMD simulation outputs are processed directly by the script and do not need to be modified, due to differences in trajectory outputs and recording of equilibration steps between OpenMM and Amber/NaMD simulations we require specification of which simulation engine (--engine) was used so that equilibration steps can be removed.
+## Run VDR
+Below is a minimum example for running VDR reweighting, this generate a single PMF distribution using a VDR cut-off of 9500:
+``` 
+VDR --gamd output/gamd.log --data input/data_example.txt --mode single --conv_points 9500 --pbc True --output output_VDR
+``` 
+For a more customised reweighting:
+``` 
+VDR --gamd output/gamd.log --data input/data_example.txt --cores 12 --emax 8 --mode convergence --conv_points 9500 --pbc True --output output_VDR
+``` 
+For details on all the arguments, you can use
+``` 
+VDR -h
+``` 
 
 ## Requirements
 - python3
