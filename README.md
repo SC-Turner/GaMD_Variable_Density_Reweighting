@@ -1,19 +1,19 @@
 # GaMD Variable Density Reweighting (VDR)
-Reweighting of GaMD simulation trajectories in 2D collective variable space.
 
 [![PyPI package](https://img.shields.io/badge/pip%20install-example--pypi--package-brightgreen)](https://pypi.org/project/example-pypi-package/) 
 [![version number](https://img.shields.io/pypi/v/example-pypi-package?color=green&label=version)](https://github.com/tomchen/example_pypi_package/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 # Introduction
-VDR is a reweighting methodology developed as an improvement to the original PyReweighting script by Yinglong Miao (2014).
+VDR is a python-based package for energetic reweighting of Gaussian Accelerated MD simulations. VDR provides a toolkit for calculating optimal boost parameters for GaMD simulations and performing post-hoc reweighting of GaMD simulation trajectories.
+VDR serves an improvement to the original PyReweighting script by Yinglong Miao (2014).
 
 # Installation
 ## Using pip
 ``` 
 pip install <UPDATE PYPI>
 ``` 
-## From tarball
+## From source
 ``` 
 git clone https://github.com/sct1g15/GaMD_Variable_Density_Reweighting.git
 cd GaMD_Variable_Density_Reweighting
@@ -54,14 +54,9 @@ For details on all the arguments, you can use
 VDR -h
 ``` 
 
-## Requirements
-- python3
-- Numpy
-- Scipy (>1.7.0)
-- MDAnalysis
-- multiprocessing
-- pandas
-- sklearn
-
 ## References
 Miao Y, Sinko W, Pierce L, Bucher D, Walker RC, McCammon JA (2014) Improved reweighting of accelerated molecular dynamics simulations for free energy calculation. J Chemical Theory and Computation, 10(7): 2677-2689.
+Miao, Y., et al. (2015). Gaussian Accelerated Molecular Dynamics: Unconstrained Enhanced Sampling and Free Energy Calculation. Journal of Chemical Theory and Computation 11(8): 3584-3595.
+	
+
+
