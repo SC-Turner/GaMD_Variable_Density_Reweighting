@@ -158,8 +158,8 @@ class VariableDensityReweighting:
                     continue
                 else:
                     universe.append(arr)
-                    plt.scatter(arr[..., 0], arr[..., 1])
-            plt.savefig(f'temp_{self.cutoff}.png')
+                    #plt.scatter(arr[..., 0], arr[..., 1])
+            #plt.savefig(f'temp_{self.cutoff}.png')
             self.universe = universe
 
             if np.array(old_universe, dtype=object).shape == np.array(self.universe, dtype=object).shape:
@@ -533,22 +533,23 @@ class VariableDensityReweighting:
                    np.column_stack((conv_points, self.SE_distribution)))
         plt.clf()
 
-    def determine_convergence(self, output='output', error_tol=0.02, mindata=10):
+    def determine_convergence(self, output='output', error_tol=0.02, mindata=10 anharm_error_tol=0.01):
         ndata_df = np.loadtxt(str(output) + '/convergence/ndata.dat')
         stdmin_df = np.loadtxt(str(output) + '/convergence/std_min.dat')
-        stderr_df = np.loadtxt(str(output) + '/convergence/StdErr.dat')
+        #stderr_df = np.loadtxt(str(output) + '/convergence/StdErr.dat')
+        anharm_df = np.loadtxt(str(output) + '/convergence/anharm_min.dat')
         prior = []
         done = 0
-        for i in zip(ndata_df, stdmin_df, stderr_df):
-            ndata1, stdmin1, stderr = i
-            if ndata1[0] == stdmin1[0] == stderr[0]:
-                if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol) & (stderr[1] < error_tol):
+        for i in zip(ndata_df, stdmin_df, anharm_df):
+            ndata1, stdmin1, anharm = i
+            if ndata1[0] == stdmin1[0] == stderr[0] == anharm[0]:
+                if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol) & (anharm[1] < anharm_error_tol):
                     print(f'Point before convergence: Cut-off = {prior}')
                     print(f'Convergence Reached: Cut-off = {ndata1[0]}')
                     done = 1
                     break
             else:
-                print('Error: std_min.dat, ndata.dat, StdErr.dat have different cutoff values, check inputs')
+                print('Error: std_min.dat, ndata.dat, anharm_min.dat have different cutoff values, check inputs')
                 break
             prior = ndata1[0]
         if done == 0:

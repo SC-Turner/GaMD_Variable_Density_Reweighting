@@ -1,4 +1,5 @@
 import argparse
+import os
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Utility Script to combine gamd.log files with correct formatting for VDR")
@@ -9,23 +10,32 @@ def parse_args():
 
 def main():
     args = parse_args()
-    gamd_final = open('gamd_concat.log', 'a')
-    data_final = open('data_concat.dat', 'a')
-    print(args.gamd)
-    print(args.data)
+    if os.path.exists("GaMD_tempout.log"):
+        os.remove("GaMD_tempout.log")
+    if os.path.exists("gamd_concat.log"):
+        os.remove("gamd_concat.log")
+    if os.path.exists("data_concat.dat"):
+        os.remove("data_concat.dat")
     for i in zip(args.gamd, args.data):
         gamd, data = i
-        print(args.gamd[0])
-        with open(gamd, 'r') as f:
-            for line in f:
+        with open(gamd, 'r') as infile, open('GaMD_tempout.log', 'w') as outfile:
+            for line in infile:
                 if not line.startswith('  #'):
-                    gamd_final.write(line)
-        data_file = open(data, 'r')
-        data_final.write(data_file.read())
-        f.close()
-        data_file.close()
-    gamd_final.close()
-    data_final.close()
-
-if __name__=='__main__':
-    main()
+                    outfile.write(line)
+        with open('GaMD_tempout.log', 'r') as infile:
+            gamdlen = len(infile.readlines())
+        with open(data, 'r') as infile:
+            datalen = len(infile.readlines())
+        min_entries = min(gamdlen, datalen)
+        print(min_entries)
+        print(gamd)
+        with open('gamd_concat.log', 'a') as f, open('GaMD_tempout.log', 'r') as infile:
+            d1 = infile.readlines()
+            for i in range(min_entries):
+                f.write(d1[i])
+        with open('data_concat.dat', 'a') as f,  open(data, 'r') as infile:
+            d2 = infile.readlines()
+            for i in range(min_entries):
+                f.write(d2[i])
+    if os.path.exists("GaMD_tempout.log"):
+        os.remove("GaMD_tempout.log")

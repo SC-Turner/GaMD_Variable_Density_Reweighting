@@ -14,6 +14,8 @@ def parse_args():
     parser.add_argument("--emax", type=float, help='Kcal/mol value assigned for unsampled regions of CV-space', required=False, default=8)
     parser.add_argument("--error_tol", type=float, help='Standard deviation convergence error tolerance',
                         required=False, default=0.02)
+    parser.add_argument("--error_tol", type=float, help='Anharmonicity convergence error tolerance',
+                        required=False, default=0.01)
     parser.add_argument("--mindata", type=float, help='Minimum number of datapoints to allow convergence',
                         required=False, default=30)
     parser.add_argument("--itermax", type=int, help='Generally ignore, cutoff for how many segmentation iterations for VDR', required=False, default=9999)
@@ -77,7 +79,7 @@ def main():
             a.interpolate_pmf(xlim=args.xlim, ylim=args.ylim, xlab=args.xlab, ylab=args.ylab)
             a.plot_PMF(xlab=args.xlab, ylab=args.ylab, title=f'PMF cutoff {i}', xlim=args.xlim, ylim=args.ylim)
         a.calc_conv(conv_points=conv_points)
-        a.determine_convergence(output=args.output, error_tol=args.error_tol, mindata=args.mindata)
+        a.determine_convergence(output=args.output, error_tol=args.error_tol, mindata=args.mindata, anharm_error_tol=args.anharm_error_tol)
 
     if args.mode == 'single':
         i = args.conv_points
