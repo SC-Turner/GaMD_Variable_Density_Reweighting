@@ -158,8 +158,14 @@ class VariableDensityReweighting:
                     continue
                 else:
                     universe.append(arr)
-                    #plt.scatter(arr[..., 0], arr[..., 1])
-            #plt.savefig(f'temp_{self.cutoff}.png')
+                    #if segment_iterations == self.iterations-1:
+                        #plt.scatter(arr[..., 0], arr[..., 1])
+            #if segment_iterations == self.iterations-1:
+                #plt.xlabel('\u03C6')
+                #plt.ylabel('\u03C8')
+                #plt.xlim((-180, 180))
+                #plt.ylim((-180, 180))
+                #plt.savefig(f'datapoints_{self.cutoff}_{self.iterations}.png')
             self.universe = universe
 
             if np.array(old_universe, dtype=object).shape == np.array(self.universe, dtype=object).shape:
@@ -533,7 +539,7 @@ class VariableDensityReweighting:
                    np.column_stack((conv_points, self.SE_distribution)))
         plt.clf()
 
-    def determine_convergence(self, output='output', error_tol=0.02, mindata=10 anharm_error_tol=0.01):
+    def determine_convergence(self, output='output', error_tol=0.02, mindata=10, anharm_error_tol=0.01):
         ndata_df = np.loadtxt(str(output) + '/convergence/ndata.dat')
         stdmin_df = np.loadtxt(str(output) + '/convergence/std_min.dat')
         #stderr_df = np.loadtxt(str(output) + '/convergence/StdErr.dat')

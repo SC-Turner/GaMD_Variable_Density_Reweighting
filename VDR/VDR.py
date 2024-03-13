@@ -11,10 +11,10 @@ def parse_args():
     parser.add_argument("--gamd", help="gamd weights .dat file location, generated from GaMD simulation", required=True)
     parser.add_argument("--data", help="Datafile location containing CV values and timestep, formatted as in input/data_example.txt", required=True)
     parser.add_argument("--cores", type=int, help='Number of CPU cores to use for VDR', required=True)
-    parser.add_argument("--emax", type=float, help='Kcal/mol value assigned for unsampled regions of CV-space', required=False, default=8)
+    parser.add_argument("--emax", type=float, help='kcal/mol value assigned for unsampled regions of CV-space', required=False, default=8)
     parser.add_argument("--error_tol", type=float, help='Standard deviation convergence error tolerance',
                         required=False, default=0.02)
-    parser.add_argument("--error_tol", type=float, help='Anharmonicity convergence error tolerance',
+    parser.add_argument("--anharm_error_tol", type=float, help='Anharmonicity convergence error tolerance',
                         required=False, default=0.01)
     parser.add_argument("--mindata", type=float, help='Minimum number of datapoints to allow convergence',
                         required=False, default=30)
