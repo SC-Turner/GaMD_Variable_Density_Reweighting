@@ -548,7 +548,7 @@ class VariableDensityReweighting:
         done = 0
         for i in zip(ndata_df, stdmin_df, anharm_df):
             ndata1, stdmin1, anharm = i
-            if ndata1[0] == stdmin1[0] == stderr[0] == anharm[0]:
+            if ndata1[0] == stdmin1[0] == anharm[0]:
                 if (ndata1[1] > mindata) & ((stdmin1[1] - self.whole_dv_std) < error_tol) & (anharm[1] < anharm_error_tol):
                     print(f'Point before convergence: Cut-off = {prior}')
                     print(f'Convergence Reached: Cut-off = {ndata1[0]}')
