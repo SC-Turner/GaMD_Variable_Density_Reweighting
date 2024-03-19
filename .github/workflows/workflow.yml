@@ -31,11 +31,3 @@ jobs:
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           repository_url: https://upload.pypi.org/legacy/ 
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to hosting service
-        # Example command to deploy, replace with actual deployment command
-        #         run: echo "Deploying to hosting service..."
