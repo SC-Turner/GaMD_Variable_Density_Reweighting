@@ -11,7 +11,7 @@ VDR serves an improvement to the original PyReweighting script by Yinglong Miao 
 # Installation
 ## Using pip
 ``` 
-pip install <UPDATE PYPI>
+pip install gamdvdr
 ``` 
 ## From source
 ``` 
