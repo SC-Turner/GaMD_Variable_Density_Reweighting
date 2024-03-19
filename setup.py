@@ -12,7 +12,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'GaMDVDR'
+NAME = 'gamdvdr'
 DESCRIPTION = 'Variable Density Reweighting for GaMD Simulations'
 URL = 'https://upload.pypi.org/legacy/'
 EMAIL = 'sct1g15@soton.ac.uk'
@@ -112,9 +112,9 @@ setup(
     #                        'VDR_Combine = VDR.combine_replicas:main'],
     #},
     entry_points={
-        'console_scripts': ['VDR = VDR.VDR:main',
-'VDR_comb = VDR.combine_replicas:main',
-'VDR_param = VDR.VDR_param:main'],
+        'console_scripts': ['VDR = gamdvdr.VDR:main',
+'VDR_comb = gamdvdr.combine_replicas:main',
+'VDR_param = gamdvdr.VDR_param:main'],
     },
     install_requires=REQUIRED,
     #scripts=['VDR_Call.py'],

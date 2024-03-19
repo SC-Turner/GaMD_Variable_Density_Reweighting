@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from VDR.VDR_Indep import VariableDensityReweighting as VDR
+from gamdvdr.VDR_Indep import VariableDensityReweighting as VDR
 import numpy as np
 import argparse
 import sys
