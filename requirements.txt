@@ -7,4 +7,4 @@ multiprocess==0.70.12.2
 scikit-learn==1.4.0
 matplotlib==3.5.2
 argparse==1.4.0
-mdanalysis==2.1.0
+mdanalysis==2.7.0
