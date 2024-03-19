@@ -14,7 +14,7 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'GaMDVDR'
 DESCRIPTION = 'Variable Density Reweighting for GaMD Simulations'
-URL = 'https://github.com/sct1g15/GaMD_Variable_Density_Reweighting'
+URL = 'https://upload.pypi.org/legacy/'
 EMAIL = 'sct1g15@soton.ac.uk'
 AUTHOR = 'Steven Turner'
 REQUIRES_PYTHON = '>=3.6'
