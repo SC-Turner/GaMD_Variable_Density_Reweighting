@@ -17,7 +17,7 @@ DESCRIPTION = 'Variable Density Reweighting for GaMD Simulations'
 URL = 'https://github.com/sct1g15/GaMD_Variable_Density_Reweighting'
 EMAIL = 'sct1g15@soton.ac.uk'
 AUTHOR = 'Steven Turner'
-REQUIRES_PYTHON = '>=3.6.0'
+REQUIRES_PYTHON '>=3.6, <=3.11'
 VERSION = '0.1.0'
 
 # What packages are required for this module to be executed?
