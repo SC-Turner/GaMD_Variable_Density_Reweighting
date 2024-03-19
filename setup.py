@@ -12,7 +12,7 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'VDR'
+NAME = 'GaMDVDR'
 DESCRIPTION = 'Variable Density Reweighting for GaMD Simulations'
 URL = 'https://github.com/sct1g15/GaMD_Variable_Density_Reweighting'
 EMAIL = 'sct1g15@soton.ac.uk'
