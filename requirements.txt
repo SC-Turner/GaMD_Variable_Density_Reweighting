@@ -1,4 +1,5 @@
 # Core dependencies
+setuptools==62.3.4
 numpy==1.22.4
 mdanalysis==2.1.0
 pandas==1.4.2
