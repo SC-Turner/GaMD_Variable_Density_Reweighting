@@ -9,15 +9,15 @@ VDR is a python-based package for energetic reweighting of Gaussian Accelerated 
 VDR serves an improvement to the original PyReweighting script by Yinglong Miao (2014).
 
 # Installation
-## Using pip
-``` 
-pip install gamdvdr
-``` 
 ## From source
 ``` 
 git clone https://github.com/sct1g15/GaMD_Variable_Density_Reweighting.git
 cd GaMD_Variable_Density_Reweighting
 python setup.py install
+```
+## Using pip (TBD)
+``` 
+Not currently functional: pip install gamdvdr
 ``` 
 
 # Tutorial
@@ -45,14 +45,40 @@ Below is a minimum example for running VDR reweighting, this generate a single P
 ``` 
 VDR --gamd output/gamd.log --data input/data_example.txt --mode single --conv_points 9500 --pbc True --output output_VDR
 ``` 
-For a more customised reweighting:
+For a more customised reweighting (Testing the data convergence):
 ``` 
-VDR --gamd output/gamd.log --data input/data_example.txt --cores 12 --emax 8 --mode convergence --conv_points 9500 --pbc True --output output_VDR
+VDR --gamd output/gamd.log --data input/data_example.txt --cores 12 --emax 8 --mode convergence --conv_points 1000 100000 --conv_points_num 7 --conv_points_scale log --pbc True --output output_VDR
 ``` 
 For details on all the arguments, you can use
 ``` 
 VDR -h
-``` 
+```
+
+## VDR Arguments
+
+Required Parameters:
+| Parameter | Description | Required | Default | 
+| :--- | :--- | :--- | :--- |
+| gamd | gamd weights .dat file location, generated from GaMD simulation | yes | None |
+| data | Datafile location containing CV values and timestep, formatted as in input/data_example.txt | yes | None |
+| conv_points | Cut-off values for VDR segmentation, use multiple values for convergence mode, one value for single mode, or define range of values with conv_points_num and conv_points_scale | yes | None |
+| mode | Whether to evaluate a single cut-off value (--mode single) or evaluate convergence across multiple cut-off values (--mode convergence) | yes | None |
+| cores | Number of CPU cores to use for VDR | yes | None |
+
+Optional Parameters:
+| Parameter | Description | Required | Default | 
+| :--- | :--- | :--- | :--- |
+| emax | kcal/mol value assigned for unsampled regions of CV-space | no | 8 |
+| pbc | Whether to add partial duplicated boundaries if the CV-limits loop around, i.e. phi/psi angles | no | False |
+| error_tol | Standard deviation convergence error toleranc | no | 0.02 |
+| anharm_error_tol | Anharmonicity convergence error tolerance | no | 0.01 |
+| conv_points_num | Number of cut-off data points to use between range specified in --conv_points, only required for --mode convergence | no | None |
+| conv_points_scale | Whether to use a 'linear' or 'log' scale to distribute points across conv_points range with conv_points_scale | no | 'linear' |
+| cluster | Whether to extract frames from local cluster centers | no | False |
+| cluster_frames | Number of frames to include per local minima during clustering | no | 100 |
+| xlab | X-axis label for plotting | no | 'CV1' |
+| ylab | Y-axis label for plotting | no | 'CV2' |
+
 
 ## References
 Miao Y, Sinko W, Pierce L, Bucher D, Walker RC, McCammon JA (2014) Improved reweighting of accelerated molecular dynamics simulations for free energy calculation. J Chemical Theory and Computation, 10(7): 2677-2689.
