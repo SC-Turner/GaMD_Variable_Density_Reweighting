@@ -1,7 +1,7 @@
 # GaMD Variable Density Reweighting (VDR)
 
 [![PyPI package](https://img.shields.io/badge/pip%20install-gamdvdr-brightgreen)](https://pypi.org/project/gamdvdr/) 
-[![version number](https://img.shields.io/pypi/v/gamdvdr?color=green&label=version)](https://pypi.org/project/gamdvdr/)
+[![Version](https://img.shields.io/badge/version-1.0.0-yellow)](#)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 # Introduction
