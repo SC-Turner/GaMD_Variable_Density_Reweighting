@@ -14,11 +14,11 @@ from setuptools import find_packages, setup, Command
 # Package meta-data.
 NAME = 'gamdvdr'
 DESCRIPTION = 'Variable Density Reweighting for GaMD Simulations'
-URL = 'https://upload.pypi.org/legacy/'
-EMAIL = 'sct1g15@soton.ac.uk'
+URL = 'https://pypi.org/project/gamdvdr/'
+EMAIL = 'S.C.Turner@soton.ac.uk'
 AUTHOR = 'Steven Turner'
 REQUIRES_PYTHON = '>=3.6'
-VERSION = '0.1.0'
+VERSION = '1.0.0'
 
 # What packages are required for this module to be executed?
 REQUIRED = ['numpy', 'MDAnalysis', 'scipy>=1.10.1', 'argparse', 'matplotlib', 'pandas', 'scikit-learn', 'multiprocess'
